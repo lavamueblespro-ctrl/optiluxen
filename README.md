@@ -99,6 +99,9 @@ estático. No hay backend propio que desplegar.
   observaciones y foto de la receta (sube al bucket privado `rx`)
 - **Facturación** — ítems con lente/tratamiento/precio, descuento en **% o valor fijo en $**, total,
   factura PDF (jsPDF) y envío por WhatsApp
+- **Alta de cliente con compra** — varios productos en la misma venta (varias gafas con
+  especificaciones distintas) con **+ Agregar otro producto**, total en vivo y descuento
+  aplicado al conjunto; al guardar se emite una sola factura con todos los ítems
 - **Recordatorios** — WhatsApp / correo / SMS con plantillas `{{nombre}}`,
   ventana configurable (0/7/15/30 días) e historial de envíos guardado en BD
 - **Suscripción** — estado del plan; si está vencido bloquea Clientes y

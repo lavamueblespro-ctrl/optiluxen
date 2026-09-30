@@ -142,7 +142,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 @media(max-width:420px){.two-col{grid-template-columns:1fr;}}
 .rx-entry{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;}
 .rx-entry img{width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:6px;}
-.sale-item{display:grid;grid-template-columns:1.4fr 1fr .8fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+.sale-item{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
 .sale-item input{padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;}
 @media(max-width:520px){.sale-item{grid-template-columns:1fr 1fr;}}
 .total-line{display:flex;justify-content:space-between;font-weight:700;margin-top:8px;font-size:14.5px;}
@@ -437,16 +437,10 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
     </div>
     <div id="f-gafas-section" style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;">
       <h3 style="font-size:14px;margin-bottom:4px;">Datos de la compra (opcional)</h3>
-      <p class="note" style="margin-bottom:10px;">Si el cliente ya se lleva sus gafas, agrega esto y se genera la factura automáticamente al guardar.</p>
-      <div class="two-col">
-        <div class="field"><label>Marco / montura</label><input id="f-marco" placeholder="Ej: Acetato Ray-Ban"></div>
-        <div class="field"><label>Tipo de lente</label><input id="f-tipolente" placeholder="Ej: Monofocal"></div>
-      </div>
-      <div class="two-col">
-        <div class="field"><label>Tratamiento</label><input id="f-tratamiento" placeholder="Ej: Antirreflejo"></div>
-        <div class="field"><label>Valor total</label><input id="f-valor" type="number" placeholder="0"></div>
-      </div>
-      <div class="field"><label>Descuento</label>
+      <p class="note" style="margin-bottom:10px;">Si el cliente se lleva varias gafas con especificaciones distintas, agrega cada una con <b>+ Agregar otro producto</b>. Al guardar se genera la factura con todo junto.</p>
+      <div id="f-items"></div>
+      <button class="btn-sm" type="button" style="margin-top:6px;" onclick="addFormItem()">+ Agregar otro producto</button>
+      <div class="field" style="margin-top:12px;"><label>Descuento sobre el total</label>
         <div class="disc-row">
           <input id="f-descuento" type="number" min="0" value="0" placeholder="0">
           <div class="seg disc-seg">
@@ -455,6 +449,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
           </div>
         </div>
       </div>
+      <div class="total-line"><span>Total a cobrar</span><span id="f-total">$0</span></div>
     </div>
     <button class="btn-sm solid" style="width:100%;margin-top:6px;" id="f-save-btn" onclick="saveClient()">Guardar cliente</button>
     <div id="f-welcome" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
@@ -585,6 +580,7 @@ let state = {
 };
 let currentClientId = null;
 let saleRows = [];
+let formItems = [{desc:'', lente:'', trat:'', precio:0}];
 let clientView = 'tabla';
 let authMode = 'login';
 let currentView = 'panel';
@@ -1060,7 +1056,8 @@ function openClientForm(id){
   document.getElementById('f-correo').value = c?c.correo:'';
   document.getElementById('f-fecha').value = c?c.fecha:'';
   document.getElementById('f-etapa').value = c?c.etapa:'Nuevo';
-  ['f-marco','f-tipolente','f-tratamiento','f-valor'].forEach(i=>document.getElementById(i).value='');
+  formItems = [{desc:'', lente:'', trat:'', precio:0}];
+  renderFormItems();
   document.getElementById('f-descuento').value = 0;
   setDiscMode('f', '%');
   document.getElementById('f-gafas-section').style.display = id? 'none' : 'block';
@@ -1069,6 +1066,41 @@ function openClientForm(id){
   document.getElementById('modal-form').style.display='flex';
 }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+/* ---------- productos del formulario (varias gafas en una sola compra) ---------- */
+function addFormItem(){
+  formItems.push({desc:'', lente:'', trat:'', precio:0});
+  renderFormItems();
+}
+function delFormItem(i){
+  if(formItems.length === 1){
+    formItems = [{desc:'', lente:'', trat:'', precio:0}];
+  } else {
+    formItems.splice(i,1);
+  }
+  renderFormItems();
+}
+function renderFormItems(){
+  const box = document.getElementById('f-items');
+  if(!box) return;
+  box.innerHTML = formItems.map((r,i)=>`
+    <div class="sale-item">
+      <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="formItems[${i}].desc=this.value">
+      <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="formItems[${i}].lente=this.value">
+      <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="formItems[${i}].trat=this.value">
+      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="formItems[${i}].precio=+this.value||0; calcFormTotal()">
+      <button class="btn-sm" type="button" title="Quitar este producto" onclick="delFormItem(${i})">✕</button>
+    </div>`).join('');
+  calcFormTotal();
+}
+function calcFormTotal(){
+  const el = document.getElementById('f-total');
+  if(!el) return;
+  const sub = formItems.reduce((a,r)=>a+(+r.precio||0),0);
+  const disc = +document.getElementById('f-descuento').value||0;
+  el.textContent = money(applyDiscount(sub, disc, fDiscMode));
+}
+document.addEventListener('input', e=>{ if(e.target && e.target.id==='f-descuento') calcFormTotal(); });
 
 async function saveClient(){
   const id = document.getElementById('f-id').value;
@@ -1102,20 +1134,20 @@ async function saveClient(){
     const c = {id:row.id, rx:[], sales:[], ...payload};
     state.clients.push(c);
 
-    const marco = document.getElementById('f-marco').value.trim();
-    const tipolente = document.getElementById('f-tipolente').value.trim();
-    const tratamiento = document.getElementById('f-tratamiento').value.trim();
-    const valor = +document.getElementById('f-valor').value || 0;
+    const items = formItems
+      .map(r=>({desc:(r.desc||'').trim(), lente:(r.lente||'').trim(), trat:(r.trat||'').trim(), precio:+r.precio||0}))
+      .filter(r=> r.desc || r.lente || r.trat || r.precio>0);
     const descuento = +document.getElementById('f-descuento').value || 0;
     let newSale = null;
 
-    if(valor>0 || marco || tipolente || tratamiento){
+    if(items.length){
+      const sub = items.reduce((a,i)=>a+i.precio,0);
       newSale = await insertSale(c.id, {
         date: today(),
-        items:[{desc:marco||'Compra', lente:tipolente, trat:tratamiento, precio:valor}],
+        items,
         discount: descuento,
         discount_type: fDiscMode,
-        total: applyDiscount(valor, descuento, fDiscMode)
+        total: applyDiscount(sub, descuento, fDiscMode)
       });
       c.sales.push(newSale);
     }
@@ -1311,11 +1343,11 @@ function addSaleRow(){ saleRows.push({desc:'Montura', lente:'', trat:'', precio:
 function renderSaleRows(){
   document.getElementById('sale-items').innerHTML = saleRows.map((r,i)=>`
     <div class="sale-item">
-      <input placeholder="Ítem (montura/lente/tratamiento)" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
-      <input placeholder="Tipo de lente" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
-      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value; calcTotal()">
-      <input placeholder="Tratamiento" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
-      <button class="btn-sm" onclick="saleRows.splice(${i},1); renderSaleRows();">✕</button>
+      <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
+      <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
+      <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
+      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value||0; calcTotal()">
+      <button class="btn-sm" type="button" title="Quitar este ítem" onclick="saleRows.splice(${i},1); renderSaleRows();">✕</button>
     </div>`).join('');
   calcTotal();
 }
@@ -1328,7 +1360,7 @@ function setDiscMode(which, mode){
   const amt = document.getElementById(which+'-disc-amt');
   if(pct) pct.classList.toggle('active', mode==='%');
   if(amt) amt.classList.toggle('active', mode==='$');
-  if(which==='sale') calcTotal();
+  if(which==='sale') calcTotal(); else calcFormTotal();
 }
 
 function applyDiscount(sub, val, mode){
