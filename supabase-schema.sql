@@ -80,12 +80,17 @@ create table if not exists public.sales (
   owner_id   uuid not null default auth.uid() references auth.users on delete cascade,
   date       date not null default current_date,
   discount   numeric not null default 0,
+  discount_type text not null default '%',   -- '%' porcentaje · '$' valor fijo
   total      numeric not null default 0,
   invoice_no integer,
   created_at timestamptz not null default now()
 );
 
 create index if not exists sales_client_idx on public.sales (client_id);
+
+-- Compatibilidad con instalaciones ya creadas: se puede elegir descuento en % o en $
+alter table public.sales
+  add column if not exists discount_type text not null default '%';
 
 create table if not exists public.sale_items (
   id        uuid primary key default gen_random_uuid(),

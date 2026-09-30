@@ -190,10 +190,13 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .logo-preview .ph{font-family:'Fraunces',serif;font-size:26px;color:var(--ink-soft);}
 .logo-meta{flex:1;min-width:180px;}
 
-/* ---------- VISTA PREVIA DE PDF ---------- */
-.pdf-frame-wrap{width:100%;height:min(60vh,540px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#525659;}
-.pdf-frame-wrap iframe{width:100%;height:100%;border:0;display:block;}
-.pdf-hint{display:flex;gap:7px;align-items:flex-start;margin-top:10px;}
+/* ---------- PDF (se abre en el visor del navegador) ---------- */
+/* ---------- DESCUENTO: % o valor fijo ---------- */
+.disc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.disc-row input{flex:1 1 90px;min-width:0;width:auto;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);}
+.disc-seg{flex:0 0 auto;display:inline-flex;}
+.disc-seg button{padding:9px 13px;font-size:13px;font-weight:700;white-space:nowrap;}
+.disc-seg button.active{background:var(--teal);color:#0a0716;}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;z-index:120;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 .linkbtn.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
@@ -440,7 +443,15 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
         <div class="field"><label>Tratamiento</label><input id="f-tratamiento" placeholder="Ej: Antirreflejo"></div>
         <div class="field"><label>Valor total</label><input id="f-valor" type="number" placeholder="0"></div>
       </div>
-      <div class="field"><label>Descuento (%)</label><input id="f-descuento" type="number" value="0" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);"></div>
+      <div class="field"><label>Descuento</label>
+        <div class="disc-row">
+          <input id="f-descuento" type="number" min="0" value="0" placeholder="0">
+          <div class="seg disc-seg">
+            <button type="button" id="f-disc-pct" class="active" onclick="setDiscMode('f','%')" title="El descuento se calcula como porcentaje">% porcentaje</button>
+            <button type="button" id="f-disc-amt" onclick="setDiscMode('f','$')" title="El descuento es una cantidad fija en pesos">$ valor fijo</button>
+          </div>
+        </div>
+      </div>
     </div>
     <button class="btn-sm solid" style="width:100%;margin-top:6px;" id="f-save-btn" onclick="saveClient()">Guardar cliente</button>
     <div id="f-welcome" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
@@ -508,7 +519,15 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
     <div class="tabpane" id="tab-facturacion">
       <div id="sale-items"></div>
       <button class="btn-sm" onclick="addSaleRow()">+ Agregar ítem</button>
-      <div class="field" style="margin-top:12px;"><label>Descuento total (%)</label><input id="sale-discount" type="number" value="0" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);"></div>
+      <div class="field" style="margin-top:12px;"><label>Descuento</label>
+        <div class="disc-row">
+          <input id="sale-discount" type="number" min="0" value="0" placeholder="0">
+          <div class="seg disc-seg">
+            <button type="button" id="sale-disc-pct" class="active" onclick="setDiscMode('sale','%')" title="El descuento se calcula como porcentaje">% porcentaje</button>
+            <button type="button" id="sale-disc-amt" onclick="setDiscMode('sale','$')" title="El descuento es una cantidad fija en pesos">$ valor fijo</button>
+          </div>
+        </div>
+      </div>
       <div class="total-line"><span>Total a cobrar</span><span id="sale-total">$0</span></div>
       <button class="btn-sm solid" style="width:100%;margin-top:10px;" onclick="saveSale()">Registrar cobro</button>
       <div id="sale-history" style="margin-top:16px;"></div>
@@ -516,23 +535,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
   </div>
 </div>
 
-<!-- PDF PREVIEW MODAL -->
-<div class="modal-bg" id="modal-pdf">
-  <div class="modal" style="max-width:780px;">
-    <button class="close" onclick="closePdfPreview()">✕</button>
-    <h3 id="pdf-title">Factura</h3>
-    <p class="note" id="pdf-sub" style="margin-top:-8px;margin-bottom:12px;"></p>
-    <div class="pdf-frame-wrap"><iframe id="pdf-frame" title="Vista previa de la factura"></iframe></div>
-    <p class="note pdf-hint">🧾 El PDF se genera en <b>tu navegador</b> con jsPDF — no consume cuota ni recursos de Supabase.</p>
-    <div class="actions" style="margin-top:12px;">
-      <button class="btn-sm solid" onclick="pdfDownload()">⬇️ Descargar PDF</button>
-      <button class="btn-sm wa" onclick="pdfShareWhatsApp()">💬 Compartir por WhatsApp</button>
-      <button class="btn-sm mail" onclick="pdfShareNative()">↗️ Compartir…</button>
-      <button class="btn-sm" onclick="closePdfPreview()">Cerrar</button>
-    </div>
-    <p class="note" id="pdf-share-note" style="display:none;"></p>
-  </div>
-</div>
+<!-- (visor embebido eliminado: el PDF se abre siempre en el navegador) -->
 
 <div class="toast" id="toast"></div>
 
@@ -711,6 +714,7 @@ function mapClient(row){
       id:s.id,
       date:s.date,
       discount:+s.discount||0,
+      discount_type: s.discount_type==='$' ? '$' : '%',
       total:+s.total||0,
       invoiceNo:s.invoice_no,
       items:(s.sale_items||[]).map(i=>({
@@ -1039,6 +1043,7 @@ function openClientForm(id){
   document.getElementById('f-etapa').value = c?c.etapa:'Nuevo';
   ['f-marco','f-tipolente','f-tratamiento','f-valor'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('f-descuento').value = 0;
+  setDiscMode('f', '%');
   document.getElementById('f-gafas-section').style.display = id? 'none' : 'block';
   document.getElementById('f-welcome').style.display='none';
   document.getElementById('f-save-btn').style.display='block';
@@ -1090,7 +1095,8 @@ async function saveClient(){
         date: today(),
         items:[{desc:marco||'Compra', lente:tipolente, trat:tratamiento, precio:valor}],
         discount: descuento,
-        total: valor - (valor*descuento/100)
+        discount_type: fDiscMode,
+        total: applyDiscount(valor, descuento, fDiscMode)
       });
       c.sales.push(newSale);
     }
@@ -1101,7 +1107,12 @@ async function saveClient(){
     let links='';
     if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,welcomeMsg))}" onclick="logSend(this)">WhatsApp</a>`;
     if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'¡Bienvenido a la óptica!',welcomeMsg))}" onclick="logSend(this)">Correo</a>`;
-    if(newSale) links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${c.sales.length-1})">📄 Factura PDF</button>`;
+    if(newSale){
+      const i = c.sales.length-1;
+      links+=`<button class="linkbtn solid" onclick="viewInvoice('${c.id}', ${i})">👁️ Ver PDF</button>`;
+      links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${i})">⬇️ Descargar</button>`;
+      links+=`<button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}', ${i})">💬 WhatsApp</button>`;
+    }
     document.getElementById('f-welcome-note').textContent = newSale
       ? `Cliente y factura ${invoiceNo(newSale)} guardados. Envía la factura o un saludo:`
       : 'Cliente guardado. Envíale un mensaje de bienvenida real ahora mismo:';
@@ -1208,6 +1219,8 @@ function openDetail(id){
   document.getElementById('det-etapa').textContent = c.etapa;
   setTab('datos');
   renderRx(c); saleRows=[]; renderSaleRows(); renderSaleHistory(c);
+  document.getElementById('sale-discount').value = 0;
+  setDiscMode('sale', '%');
   document.getElementById('modal-detail').style.display='flex';
 }
 function editFromDetail(){ closeModal('modal-detail'); openClientForm(currentClientId); }
@@ -1287,10 +1300,34 @@ function renderSaleRows(){
     </div>`).join('');
   calcTotal();
 }
+/* ---------- descuento: porcentaje (%) o valor fijo ($) ---------- */
+let fDiscMode = '%', saleDiscMode = '%';
+
+function setDiscMode(which, mode){
+  if(which==='f') fDiscMode = mode; else saleDiscMode = mode;
+  const pct = document.getElementById(which+'-disc-pct');
+  const amt = document.getElementById(which+'-disc-amt');
+  if(pct) pct.classList.toggle('active', mode==='%');
+  if(amt) amt.classList.toggle('active', mode==='$');
+  if(which==='sale') calcTotal();
+}
+
+function applyDiscount(sub, val, mode){
+  sub = +sub||0; val = +val||0;
+  const off = (mode==='$') ? val : sub*val/100;
+  return Math.max(0, sub - off);
+}
+
+function discLabel(val, mode){
+  val = +val||0;
+  if(!val) return '0';
+  return (mode==='$') ? money(val) : val + '%';
+}
+
 function calcTotal(){
   const sub = saleRows.reduce((a,r)=>a+(+r.precio||0),0);
   const disc = +document.getElementById('sale-discount').value||0;
-  document.getElementById('sale-total').textContent = money(sub - (sub*disc/100));
+  document.getElementById('sale-total').textContent = money(applyDiscount(sub, disc, saleDiscMode));
 }
 document.addEventListener('input', e=>{ if(e.target.id==='sale-discount') calcTotal(); });
 
@@ -1300,6 +1337,7 @@ async function insertSale(clientId, s){
     client_id: clientId,
     date: s.date,
     discount: +s.discount||0,
+    discount_type: (s.discount_type==='$' ? '$' : '%'),
     total: +s.total||0,
     invoice_no: no
   }).select().single();
@@ -1318,6 +1356,7 @@ async function insertSale(clientId, s){
   }
   return {
     id: sale.id, date: sale.date, discount:+sale.discount||0,
+    discount_type: sale.discount_type==='$' ? '$' : '%',
     total:+sale.total||0, invoiceNo: sale.invoice_no,
     items: s.items.map(i=>({desc:i.desc||'', lente:i.lente||'', trat:i.trat||'', precio:+i.precio||0}))
   };
@@ -1328,12 +1367,12 @@ async function saveSale(){
   if(!c) return;
   const sub = saleRows.reduce((a,r)=>a+(+r.precio||0),0);
   const disc = +document.getElementById('sale-discount').value||0;
-  const total = sub - (sub*disc/100);
+  const total = applyDiscount(sub, disc, saleDiscMode);
   if(!saleRows.length){ alert('Agrega al menos un ítem'); return; }
 
   busy(true,'Registrando cobro…');
   try{
-    const sale = await insertSale(c.id, {date:today(), items:saleRows, discount:disc, total});
+    const sale = await insertSale(c.id, {date:today(), items:saleRows, discount:disc, discount_type:saleDiscMode, total});
     c.sales.push(sale);
     saleRows=[]; renderSaleRows(); renderSaleHistory(c); renderPanel();
   }catch(err){ alert('No se pudo registrar el cobro: '+authErr(err)); }
@@ -1346,11 +1385,14 @@ function renderSaleHistory(c){
     ((c.sales||[]).slice().reverse().map((s,ri)=>{
       const idx = c.sales.length-1-ri;
       const label = s.items.map(i=>i.desc).filter(Boolean).join(', ')||'Ítems';
+      const dsc = (+s.discount) ? `<div class="note" style="font-size:11.5px;margin-top:-2px;">Descuento aplicado: ${discLabel(s.discount, s.discount_type)}</div>` : '';
       return `<div class="rli" style="border-bottom:1px solid var(--line);padding:8px 0;flex-direction:column;align-items:flex-start;gap:6px;">
         <div style="display:flex;justify-content:space-between;width:100%;gap:10px;"><span>${fmtDate(s.date)} · ${esc(label)}</span><span>${money(s.total)}</span></div>
+        ${dsc}
         <div class="linkrow">
-          <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">📄 Factura PDF</button>
-          <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">Compartir por WhatsApp</button>
+          <button class="linkbtn solid" onclick="viewInvoice('${c.id}',${idx})">👁️ Ver PDF</button>
+          <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">⬇️ Descargar</button>
+          <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">💬 WhatsApp</button>
         </div>
       </div>`;
     }).join('') || '<div class="note">Sin cobros registrados.</div>');
@@ -1423,7 +1465,7 @@ async function buildInvoicePDF(c, s){
 
   const sub = s.items.reduce((a,i)=>a+(+i.precio||0),0);
   doc.text('Subtotal: ' + money(sub), 140, y); y += 6;
-  doc.text('Descuento: ' + (s.discount||0) + '%', 140, y); y += 6;
+  doc.text('Descuento: ' + discLabel(s.discount, s.discount_type), 140, y); y += 6;
   doc.setFont('helvetica','bold');
   doc.text('Total: ' + money(s.total), 140, y);
 
@@ -1433,86 +1475,76 @@ async function buildInvoicePDF(c, s){
   return doc;
 }
 
-/* ---------- vista previa del PDF ---------- */
-let pdfCtx = null;
+/* ---------- PDF: se genera aquí y se abre en el navegador ---------- */
+let pdfCache = new Map();
 
-function pdfNote(txt){
-  const n = document.getElementById('pdf-share-note');
-  if(!n) return;
-  if(!txt){ n.style.display='none'; n.textContent=''; return; }
-  n.style.display='block'; n.textContent = txt;
-}
-
-async function showInvoicePreview(clientId, idx){
+/* Genera el PDF una sola vez por venta y lo deja listo.
+   Todo ocurre en el navegador con jsPDF — sin tocar Supabase. */
+async function ensureInvoice(clientId, idx){
   const c = state.clients.find(x=>x.id===clientId);
-  if(!c) return;
+  if(!c) return null;
   const s = c.sales[idx];
-  if(!s) return;
+  if(!s) return null;
 
-  busy(true,'Generando PDF en tu navegador…');
-  try{
-    if(!s.invoiceNo){
-      const no = await nextInvoiceNo();
-      if(no){
-        s.invoiceNo = no;
-        const {error} = await sb.from('sales').update({invoice_no:no}).eq('id', s.id);
-        if(error) console.warn(error);
-      }
+  const key = s.id || (clientId+':'+idx);
+  if(pdfCache.has(key)) return pdfCache.get(key);
+
+  if(!s.invoiceNo){
+    const no = await nextInvoiceNo();
+    if(no){
+      s.invoiceNo = no;
+      const {error} = await sb.from('sales').update({invoice_no:no}).eq('id', s.id);
+      if(error) console.warn(error);
     }
-    const doc = await buildInvoicePDF(c, s);
-    const blob = doc.output('blob');
-
-    if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
-    const url = URL.createObjectURL(blob);
-    pdfCtx = {c, s, blob, url};
-
-    document.getElementById('pdf-title').textContent = invoiceNo(s) + '  ·  ' + money(s.total);
-    document.getElementById('pdf-sub').textContent =
-      c.nombre + '  ·  ' + fmtDate(s.date) + '  ·  ' +
-      (s.items.map(i=>i.desc).filter(Boolean).join(', ') || 'Ítems');
-    document.getElementById('pdf-frame').src = url;
-    pdfNote('');
-    document.getElementById('modal-pdf').style.display = 'flex';
-  }catch(e){
-    alert('No se pudo generar el PDF: '+authErr(e));
-  }finally{
-    busy(false);
   }
+  const doc = await buildInvoicePDF(c, s);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const entry = {c, s, blob, url, key};
+  pdfCache.set(key, entry);
+  if(pdfCache.size > 10){
+    const first = pdfCache.keys().next().value;
+    const old = pdfCache.get(first);
+    try{ URL.revokeObjectURL(old.url); }catch(e){}
+    pdfCache.delete(first);
+  }
+  return entry;
 }
 
-function closePdfPreview(){
-  const m = document.getElementById('modal-pdf');
-  if(m) m.style.display = 'none';
-  const fr = document.getElementById('pdf-frame');
-  if(fr) fr.src = 'about:blank';
-  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
-  pdfCtx = null;
+/* 👁️ Ver PDF — se abre con el visor nativo del navegador (pestaña nueva) */
+async function viewInvoice(clientId, idx){
+  let p = null;
+  busy(true, 'Generando PDF en tu navegador…');
+  try{ p = await ensureInvoice(clientId, idx); }
+  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
+  finally{ busy(false); }
+  if(!p) return;
+  const w = window.open(p.url, '_blank');
+  if(!w) toast('El navegador bloqueó la pestaña nueva. Permite las ventanas emergentes para ver el PDF.');
 }
 
-function pdfDownload(){
-  if(!pdfCtx) return;
-  downloadBlob(invoiceNo(pdfCtx.s)+'.pdf', pdfCtx.blob);
+async function downloadInvoice(clientId, idx){
+  let p = null;
+  busy(true, 'Generando PDF en tu navegador…');
+  try{ p = await ensureInvoice(clientId, idx); }
+  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
+  finally{ busy(false); }
+  if(!p) return;
+  downloadBlob(invoiceNo(p.s)+'.pdf', p.blob);
   toast('PDF descargado ✓');
 }
 
-async function pdfShareNative(){
-  if(!pdfCtx) return;
-  try{
-    const file = new File([pdfCtx.blob], invoiceNo(pdfCtx.s)+'.pdf', {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:invoiceNo(pdfCtx.s), text:'Comprobante de venta — '+pdfCtx.c.nombre});
-      return;
-    }
-  }catch(e){ if(e && e.name==='AbortError') return; }
-  pdfDownload();
-  toast('Tu navegador no admite compartir archivos. El PDF se descargó.');
-}
+async function shareInvoiceWhatsApp(clientId, idx){
+  let p = null;
+  busy(true, 'Generando PDF en tu navegador…');
+  try{ p = await ensureInvoice(clientId, idx); }
+  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
+  finally{ busy(false); }
+  if(!p) return;
 
-async function pdfShareWhatsApp(){
-  if(!pdfCtx) return;
-  const {c, s, blob} = pdfCtx;
+  const {c, s, blob} = p;
   const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
-  // móviles: enviamos el PDF de verdad
+  // móvil: enviamos el archivo PDF de verdad
   try{
     if(navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
@@ -1523,13 +1555,11 @@ async function pdfShareWhatsApp(){
   const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
   const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí va tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}. Te lo adjunto.`;
   downloadBlob(invoiceNo(s)+'.pdf', blob);
-  window.open(waLink(c.tel, msg), '_blank');
-  pdfNote('💬 WhatsApp se abrió con el mensaje escrito. El PDF se descargó en tu equipo: adjúntalo en el chat y pulsa enviar.');
+  const w = window.open(waLink(c.tel, msg), '_blank');
+  toast(w
+    ? 'WhatsApp abierto con el mensaje. El PDF se descargó: adjúntalo y pulsa enviar.'
+    : 'WhatsApp fue bloqueado por el navegador. El PDF se descargó — compártelo manualmente.');
 }
-
-/* compat: los botones antiguos abren la vista previa */
-async function downloadInvoice(clientId, idx){ await showInvoicePreview(clientId, idx); }
-async function shareInvoiceWhatsApp(clientId, idx){ await showInvoicePreview(clientId, idx); await pdfShareWhatsApp(); }
 
 /* ---------- recordatorios ---------- */
 function toggleSw(k){ state.reminders[k]=!state.reminders[k]; document.getElementById('sw-'+k).classList.toggle('on'); renderPanel(); }

@@ -97,7 +97,7 @@ estático. No hay backend propio que desplegar.
   importación masiva (`Nombre, Teléfono, Correo` por línea) y exportación CSV
 - **Fórmulas** — OD/OI (esfera, cilindro, eje, adición), DP, tipo de lente,
   observaciones y foto de la receta (sube al bucket privado `rx`)
-- **Facturación** — ítems con lente/tratamiento/precio, descuento, total,
+- **Facturación** — ítems con lente/tratamiento/precio, descuento en **% o valor fijo en $**, total,
   factura PDF (jsPDF) y envío por WhatsApp
 - **Recordatorios** — WhatsApp / correo / SMS con plantillas `{{nombre}}`,
   ventana configurable (0/7/15/30 días) e historial de envíos guardado en BD
