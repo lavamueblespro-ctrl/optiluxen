@@ -100,9 +100,10 @@ estático. No hay backend propio que desplegar.
   observaciones y foto de la receta (sube al bucket privado `rx`)
 - **Facturación** — ítems con lente/tratamiento/precio (cada producto con su propia fila
   y botón rojo **✕ Quitar**), descuento en **% o valor fijo en $**, total,
-  factura PDF (jsPDF) y tres acciones: **compartir** (hoja nativa del celular),
-  **compartir por WhatsApp** (el PDF viaja **adjunto**, con el mensaje ya redactado)
-  y **descargar**. No hay visor embebido: el PDF siempre sale al navegador/app del sistema.
+  factura PDF (jsPDF) y tres acciones: **compartir** (hoja nativa con el PDF adjunto),
+  **compartir por WhatsApp** (abre **el chat directo del cliente con su número** —se completa
+  el prefijo 57 si el móvil se guardó sin él—, con el mensaje ya redactado y el PDF descargado
+  para adjuntarlo) y **descargar**. No hay visor embebido: el PDF siempre sale al navegador/app del sistema.
 - **Alta de cliente con compra** — varios productos en la misma venta (varias gafas con
   especificaciones distintas) con **+ Agregar otro producto**, total en vivo y descuento
   aplicado al conjunto; al guardar se emite una sola factura con todos los ítems

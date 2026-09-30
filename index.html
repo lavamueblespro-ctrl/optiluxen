@@ -215,6 +215,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .disc-seg button.active{background:var(--teal);color:#0a0716;}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;z-index:120;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.sticky{pointer-events:auto;cursor:pointer;}
 .linkbtn.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
 @media(max-width:760px){
   .shell{flex-direction:column;}
@@ -573,7 +574,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" onclick="toastHide()" title="Toca para cerrar"></div>
 
 <div class="busy" id="busy"><div id="busy-txt">Guardando…</div></div>
 
@@ -615,7 +616,16 @@ function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function attr(s){ return esc(s).replace(/\n/g,'&#10;'); }
 function money(n){ return '$'+Math.round(+n||0).toLocaleString('es-CO'); }
 function cleanPhone(p){ return (p||'').replace(/\D/g,''); }
-function waLink(phone,msg){ return `https://wa.me/${cleanPhone(phone)}?text=${encodeURIComponent(msg)}`; }
+/* wa.me exige el número en formato internacional: si llega un móvil colombiano
+   de 10 dígitos sin prefijo (300 123 4567) le ponemos 57. Con +57 ya puesto no toca nada. */
+function waNumber(p){
+  let d = cleanPhone(p);
+  if(!d) return '';
+  if(d.length === 11 && d[0] === '0') d = d.slice(1);   // 0300 123 4567
+  if(d.length === 10 && d[0] === '3') d = '57' + d;     // 300 123 4567
+  return d;
+}
+function waLink(phone,msg){ return `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(msg)}`; }
 function mailLink(email,subject,body){ return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
 function smsLink(phone,msg){ return `sms:${phone}?body=${encodeURIComponent(msg)}`; }
 function fillTemplate(tpl,c){ return String(tpl||'').replace(/{{nombre}}/g, (c.nombre||'').split(' ')[0]); }
@@ -825,12 +835,20 @@ async function signLogo(){
   if(data && data.signedUrl) state.shop.logoUrl = data.signedUrl;
 }
 
-function toast(msg){
+function toast(msg, ms){
   const t = document.getElementById('toast');
   if(!t) return;
   t.textContent = msg; t.classList.add('on');
   clearTimeout(toast._t);
-  toast._t = setTimeout(()=>t.classList.remove('on'), 3600);
+  if(ms === 0){ t.classList.add('sticky'); return; }   // aviso fijo: se cierra con un toque
+  t.classList.remove('sticky');
+  toast._t = setTimeout(()=>t.classList.remove('on'), ms || 3600);
+}
+function toastHide(){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  clearTimeout(toast._t);
+  t.classList.remove('on'); t.classList.remove('sticky');
 }
 
 function renderShop(){
@@ -1749,14 +1767,21 @@ async function buildInvoice(clientId, idx){
   return p;
 }
 
-/* 1) COMPARTIR FACTURA — hoja nativa del celular: WhatsApp, correo, Telegram, Drive… */
+/* mensaje ya redactado para el cliente */
+function invoiceMsg(c, s){
+  const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
+  return 'Hola ' + (c.nombre||'').split(' ')[0] + ', aquí va tu comprobante ' + invoiceNo(s) +
+         ' por ' + money(s.total) + ' (' + resumen + '). Fecha: ' + fmtDate(s.date) + '. Te lo adjunto.';
+}
+
+/* 1) COMPARTIR FACTURA — hoja nativa con el PDF adjunto: WhatsApp, correo, Telegram… */
 async function shareInvoice(clientId, idx){
   const p = await buildInvoice(clientId, idx);
   if(!p) return;
   try{
     const file = new File([p.blob], invoiceNo(p.s)+'.pdf', {type:'application/pdf'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:invoiceNo(p.s), text:'Comprobante de venta — '+p.c.nombre});
+      await navigator.share({files:[file], title:'Factura ' + invoiceNo(p.s), text:invoiceMsg(p.c, p.s)});
       return;
     }
   }catch(e){ if(e && e.name==='AbortError') return; }
@@ -1764,34 +1789,37 @@ async function shareInvoice(clientId, idx){
   toast('Este navegador no tiene menú de compartir. Guardamos la factura para que la compartas.');
 }
 
-/* 2) COMPARTIR FACTURA POR WHATSAPP — el PDF viaja como archivo adjunto */
+/* 2) COMPARTIR POR WHATSAPP — abre el chat directo del cliente con su número */
 async function shareInvoiceWhatsApp(clientId, idx){
   const p = await buildInvoice(clientId, idx);
   if(!p) return;
   const c = p.c, s = p.s;
-  const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
-  const msg = 'Hola ' + (c.nombre||'').split(' ')[0] + ', aquí va tu comprobante ' + invoiceNo(s) +
-              ' por ' + money(s.total) + ' (' + resumen + '). Fecha: ' + fmtDate(s.date) + '. Te lo adjunto.';
+  const msg = invoiceMsg(c, s);
+  const num = waNumber(c.tel);
 
-  // 1) el PDF sale en formato archivo: hoja nativa -> WhatsApp -> cliente
-  try{
-    const file = new File([p.blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:'Factura ' + invoiceNo(s), text:msg});
-      return;
-    }
-  }catch(e){ if(e && e.name==='AbortError') return; }
-
-  // 2) navegador sin envío de archivos: PDF descargado + chat abierto con el mensaje
-  downloadBlob(invoiceNo(s)+'.pdf', p.blob);
-  if(!c.tel){
-    toast('Este cliente no tiene teléfono. Descargamos la factura para que la compartas.');
+  // sin número guardado no hay chat posible: se abre la hoja con el archivo adjunto
+  if(!num){
+    try{
+      const file = new File([p.blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Factura ' + invoiceNo(s), text:msg});
+        return;
+      }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+    downloadBlob(invoiceNo(s)+'.pdf', p.blob);
+    toast('Este cliente no tiene teléfono. Guardamos la factura para que la compartas.');
     return;
   }
-  const w = window.open(waLink(c.tel, msg), '_blank');
-  toast(w
-    ? 'WhatsApp abierto con el mensaje. Adjunta la factura que se descargó y envía.'
-    : 'WhatsApp fue bloqueado por el navegador. La factura se descargó.');
+
+  // el PDF queda descargado y listo para adjuntar en el chat
+  downloadBlob(invoiceNo(s)+'.pdf', p.blob);
+
+  // chat directo con el número que ya está en la ficha del cliente
+  const url = waLink(c.tel, msg);
+  const w = window.open(url, '_blank');
+  if(!w) location.href = url;
+  toast('Chat de ' + (c.nombre||'el cliente') + ' abierto. Adjunta el PDF: ➜ 📎 ➜ Documento ➜ '
+        + invoiceNo(s) + '.pdf   ·   toca aquí para cerrar', 0);
 }
 
 /* 3) DESCARGAR FACTURA */
