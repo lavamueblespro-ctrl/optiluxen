@@ -97,8 +97,10 @@ estático. No hay backend propio que desplegar.
   importación masiva (`Nombre, Teléfono, Correo` por línea) y exportación CSV
 - **Fórmulas** — OD/OI (esfera, cilindro, eje, adición), DP, tipo de lente,
   observaciones y foto de la receta (sube al bucket privado `rx`)
-- **Facturación** — ítems con lente/tratamiento/precio, descuento en **% o valor fijo en $**, total,
-  factura PDF (jsPDF) y envío por WhatsApp
+- **Facturación** — ítems con lente/tratamiento/precio (cada producto con su propia fila
+  y botón rojo **✕ Quitar**), descuento en **% o valor fijo en $**, total,
+  factura PDF (jsPDF) y tres acciones: **compartir** (hoja nativa del celular),
+  **compartir por WhatsApp** y **descargar**
 - **Alta de cliente con compra** — varios productos en la misma venta (varias gafas con
   especificaciones distintas) con **+ Agregar otro producto**, total en vivo y descuento
   aplicado al conjunto; al guardar se emite una sola factura con todos los ítems

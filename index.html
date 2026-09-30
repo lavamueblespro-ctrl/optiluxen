@@ -142,7 +142,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 @media(max-width:420px){.two-col{grid-template-columns:1fr;}}
 .rx-entry{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;}
 .rx-entry img{width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:6px;}
-.sale-item{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+.sale-item{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr;gap:6px;align-items:center;}
 .sale-item input{padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;}
 @media(max-width:520px){.sale-item{grid-template-columns:1fr 1fr;}}
 .total-line{display:flex;justify-content:space-between;font-weight:700;margin-top:8px;font-size:14.5px;}
@@ -190,10 +190,12 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .logo-preview .ph{font-family:'Fraunces',serif;font-size:26px;color:var(--ink-soft);}
 .logo-meta{flex:1;min-width:180px;}
 
-/* ---------- VISTA PREVIA DE PDF ---------- */
-.pdf-frame-wrap{width:100%;height:min(60vh,540px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#525659;}
-.pdf-frame-wrap iframe{width:100%;height:100%;border:0;display:block;}
-.pdf-hint{display:flex;gap:7px;align-items:flex-start;margin-top:12px;}
+/* ---------- filas de producto: cabecera con "Quitar" en rojo ---------- */
+.sale-item-box{margin-bottom:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);}
+.sale-item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;}
+.sale-item-head b{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
+.del-item{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--danger);background:rgba(239,68,68,.14);color:var(--danger);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1;transition:background .15s,color .15s;}
+.del-item:hover{background:var(--danger);color:#fff;}
 /* ---------- DESCUENTO: % o valor fijo ---------- */
 .disc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .disc-row input{flex:1 1 90px;min-width:0;width:auto;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);}
@@ -530,24 +532,6 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       <button class="btn-sm solid" style="width:100%;margin-top:10px;" onclick="saveSale()">Registrar cobro</button>
       <div id="sale-history" style="margin-top:16px;"></div>
     </div>
-  </div>
-</div>
-
-<!-- PDF MODAL -->
-<div class="modal-bg" id="modal-pdf">
-  <div class="modal" style="max-width:780px;">
-    <button class="close" onclick="closePdfPreview()">✕</button>
-    <h3 id="pdf-title">Factura</h3>
-    <p class="note" id="pdf-sub" style="margin-top:-8px;margin-bottom:12px;"></p>
-    <div class="pdf-frame-wrap"><iframe id="pdf-frame" title="Vista previa de la factura"></iframe></div>
-    <p class="note pdf-hint">🧾 El PDF se genera en <b>tu navegador</b> con jsPDF — no consume cuota ni recursos de Supabase.</p>
-    <div class="actions" style="margin-top:14px;">
-      <button class="btn-sm" onclick="pdfDownload()">⬇️ Descargar PDF</button>
-      <button class="btn-sm solid" onclick="pdfShare()">↗️ Compartir</button>
-      <button class="btn-sm wa" onclick="pdfShareWhatsApp()">💬 Compartir por WhatsApp</button>
-      <button class="btn-sm" onclick="closePdfPreview()">Cerrar</button>
-    </div>
-    <p class="note" id="pdf-share-note" style="display:none;"></p>
   </div>
 </div>
 
@@ -1084,12 +1068,17 @@ function renderFormItems(){
   const box = document.getElementById('f-items');
   if(!box) return;
   box.innerHTML = formItems.map((r,i)=>`
-    <div class="sale-item">
-      <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="formItems[${i}].desc=this.value">
-      <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="formItems[${i}].lente=this.value">
-      <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="formItems[${i}].trat=this.value">
-      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="formItems[${i}].precio=+this.value||0; calcFormTotal()">
-      <button class="btn-sm" type="button" title="Quitar este producto" onclick="delFormItem(${i})">✕</button>
+    <div class="sale-item-box">
+      <div class="sale-item-head">
+        <b>Producto ${i+1}</b>
+        <button class="del-item" type="button" title="Quitar este producto" onclick="delFormItem(${i})">✕ Quitar</button>
+      </div>
+      <div class="sale-item">
+        <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="formItems[${i}].desc=this.value">
+        <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="formItems[${i}].lente=this.value">
+        <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="formItems[${i}].trat=this.value">
+        <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="formItems[${i}].precio=+this.value||0; calcFormTotal()">
+      </div>
     </div>`).join('');
   calcFormTotal();
 }
@@ -1156,13 +1145,15 @@ async function saveClient(){
 
     const welcomeMsg = `Hola ${(c.nombre||'').split(' ')[0]}, gracias por registrarte en nuestra óptica. Guardaremos aquí tu historial y te avisaremos antes de tu próxima revisión.`;
     let links='';
+    if(c.tel || c.correo) links += '<span class="note" style="width:100%;font-size:11.5px;">Saludo de bienvenida</span>';
     if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,welcomeMsg))}" onclick="logSend(this)">WhatsApp</a>`;
     if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'¡Bienvenido a la óptica!',welcomeMsg))}" onclick="logSend(this)">Correo</a>`;
     if(newSale){
       const i = c.sales.length-1;
-      links+=`<button class="linkbtn solid" onclick="openInvoice('${c.id}', ${i})">📄 Factura PDF</button>`;
-      links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${i})">⬇️ Descargar</button>`;
-      links+=`<button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}', ${i})">💬 WhatsApp</button>`;
+      links += `<span class="note" style="width:100%;font-size:11.5px;margin-top:6px;">Factura ${invoiceNo(newSale)}</span>`;
+      links+=`<button class="linkbtn solid" onclick="shareInvoice('${c.id}', ${i})">↗️ Compartir factura</button>`;
+      links+=`<button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}', ${i})">💬 Compartir por WhatsApp</button>`;
+      links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${i})">⬇️ Descargar factura</button>`;
     }
     document.getElementById('f-welcome-note').textContent = newSale
       ? `Cliente y factura ${invoiceNo(newSale)} guardados. Envía la factura o un saludo:`
@@ -1342,15 +1333,21 @@ async function addRx(){
 function addSaleRow(){ saleRows.push({desc:'Montura', lente:'', trat:'', precio:0}); renderSaleRows(); }
 function renderSaleRows(){
   document.getElementById('sale-items').innerHTML = saleRows.map((r,i)=>`
-    <div class="sale-item">
-      <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
-      <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
-      <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
-      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value||0; calcTotal()">
-      <button class="btn-sm" type="button" title="Quitar este ítem" onclick="saleRows.splice(${i},1); renderSaleRows();">✕</button>
+    <div class="sale-item-box">
+      <div class="sale-item-head">
+        <b>Producto ${i+1}</b>
+        <button class="del-item" type="button" title="Quitar este producto" onclick="delSaleRow(${i})">✕ Quitar</button>
+      </div>
+      <div class="sale-item">
+        <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
+        <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
+        <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
+        <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value||0; calcTotal()">
+      </div>
     </div>`).join('');
   calcTotal();
 }
+function delSaleRow(i){ saleRows.splice(i,1); renderSaleRows(); }
 /* ---------- descuento: porcentaje (%) o valor fijo ($) ---------- */
 let fDiscMode = '%', saleDiscMode = '%';
 
@@ -1441,9 +1438,9 @@ function renderSaleHistory(c){
         <div style="display:flex;justify-content:space-between;width:100%;gap:10px;"><span>${fmtDate(s.date)} · ${esc(label)}</span><span>${money(s.total)}</span></div>
         ${dsc}
         <div class="linkrow">
-          <button class="linkbtn solid" onclick="openInvoice('${c.id}',${idx})">📄 Factura PDF</button>
-          <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">⬇️ Descargar</button>
-          <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">💬 WhatsApp</button>
+          <button class="linkbtn solid" onclick="shareInvoice('${c.id}',${idx})">↗️ Compartir factura</button>
+          <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">💬 Compartir por WhatsApp</button>
+          <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">⬇️ Descargar factura</button>
         </div>
       </div>`;
     }).join('') || '<div class="note">Sin cobros registrados.</div>');
@@ -1526,11 +1523,9 @@ async function buildInvoicePDF(c, s){
   return doc;
 }
 
-/* ---------- PDF: se genera en el navegador y se ofrece en una ventana ---------- */
-let pdfCtx = null;
+/* ---------- PDF: se genera en el navegador y se comparte o descarga ---------- */
 
-/* Genera el PDF una sola vez por venta. Todo ocurre en el navegador con
-   jsPDF — aquí no se consume ni un recurso de Supabase. */
+/* Genera el PDF con jsPDF dentro del navegador, sin gastar recursos de Supabase. */
 async function makeInvoice(clientId, idx){
   const c = state.clients.find(x=>x.id===clientId);
   if(!c) return null;
@@ -1546,107 +1541,58 @@ async function makeInvoice(clientId, idx){
     }
   }
   const doc = await buildInvoicePDF(c, s);
-  const blob = doc.output('blob');
-  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
-  pdfCtx = {c, s, blob, url: URL.createObjectURL(blob)};
-  return pdfCtx;
+  return {c, s, blob: doc.output('blob')};
 }
 
-function pdfNote(txt){
-  const n = document.getElementById('pdf-share-note');
-  if(!n) return;
-  if(!txt){ n.style.display='none'; n.textContent=''; return; }
-  n.style.display='block'; n.textContent = txt;
-}
-
-/* Abre la ventana con la factura ya generada */
-async function openInvoice(clientId, idx){
-  busy(true, 'Generando PDF en tu navegador…');
-  try{
-    const p = await makeInvoice(clientId, idx);
-    if(!p) return;
-    document.getElementById('pdf-title').textContent = invoiceNo(p.s) + '  ·  ' + money(p.s.total);
-    document.getElementById('pdf-sub').textContent =
-      p.c.nombre + '  ·  ' + fmtDate(p.s.date) + '  ·  ' +
-      (p.s.items.map(i=>i.desc).filter(Boolean).join(', ') || 'Ítems');
-    document.getElementById('pdf-frame').src = p.url;
-    pdfNote('');
-    document.getElementById('modal-pdf').style.display = 'flex';
-  }catch(e){
-    alert('No se pudo generar el PDF: '+authErr(e));
-  }finally{
-    busy(false);
-  }
-}
-
-function closePdfPreview(){
-  const m = document.getElementById('modal-pdf');
-  if(m) m.style.display = 'none';
-  const fr = document.getElementById('pdf-frame');
-  if(fr) fr.src = 'about:blank';
-  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
-  pdfCtx = null;
-}
-
-function pdfDownload(){
-  if(!pdfCtx) return;
-  downloadBlob(invoiceNo(pdfCtx.s)+'.pdf', pdfCtx.blob);
-  toast('PDF descargado ✓');
-}
-
-/* ↗️ Compartir — abre el menú nativo del celular: WhatsApp, correo, Telegram… */
-async function pdfShare(){
-  if(!pdfCtx) return;
-  const {c, s, blob} = pdfCtx;
-  try{
-    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
-      return;
-    }
-  }catch(e){ if(e && e.name==='AbortError') return; }
-  downloadBlob(invoiceNo(s)+'.pdf', blob);
-  pdfNote('Este navegador no tiene menú de compartir. Descargamos el PDF para que lo compartas desde tu equipo.');
-}
-
-/* 💬 Compartir por WhatsApp */
-async function pdfShareWhatsApp(){
-  if(!pdfCtx) return;
-  const {c, s, blob} = pdfCtx;
-  // móvil: adjuntamos el PDF de verdad
-  try{
-    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
-      return;
-    }
-  }catch(e){ if(e && e.name==='AbortError') return; }
-  // escritorio: mensaje ya redactado + PDF descargado para adjuntar
-  const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
-  const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí va tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}. Te lo adjunto.`;
-  downloadBlob(invoiceNo(s)+'.pdf', blob);
-  const w = window.open(waLink(c.tel, msg), '_blank');
-  pdfNote(w
-    ? '💬 WhatsApp se abrió con el mensaje escrito. El PDF se descargó: adjúntalo en el chat y pulsa enviar.'
-    : '💬 WhatsApp fue bloqueado por el navegador. El PDF se descargó — compártelo manualmente.');
-}
-
-/* botones sueltos, fuera de la ventana */
-async function downloadInvoice(clientId, idx){
-  busy(true, 'Generando PDF en tu navegador…');
-  try{
-    if(await makeInvoice(clientId, idx)) pdfDownload();
-  }catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); }
+async function buildInvoice(clientId, idx){
+  busy(true, 'Generando factura en tu navegador…');
+  let p = null;
+  try{ p = await makeInvoice(clientId, idx); }
+  catch(e){ alert('No se pudo generar la factura: '+authErr(e)); }
   finally{ busy(false); }
+  return p;
 }
 
+/* 1) COMPARTIR FACTURA — hoja nativa del celular: WhatsApp, correo, Telegram, Drive… */
+async function shareInvoice(clientId, idx){
+  const p = await buildInvoice(clientId, idx);
+  if(!p) return;
+  try{
+    const file = new File([p.blob], invoiceNo(p.s)+'.pdf', {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:invoiceNo(p.s), text:'Comprobante de venta — '+p.c.nombre});
+      return;
+    }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  downloadBlob(invoiceNo(p.s)+'.pdf', p.blob);
+  toast('Este navegador no tiene menú de compartir. Guardamos la factura para que la compartas.');
+}
+
+/* 2) COMPARTIR FACTURA POR WHATSAPP — abre WhatsApp con el mensaje ya escrito */
 async function shareInvoiceWhatsApp(clientId, idx){
-  busy(true, 'Generando PDF en tu navegador…');
-  let ok = false;
-  try{ ok = !!(await makeInvoice(clientId, idx)); }
-  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
-  finally{ busy(false); }
-  if(ok) await pdfShareWhatsApp();
+  const p = await buildInvoice(clientId, idx);
+  if(!p) return;
+  const c = p.c, s = p.s;
+  const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
+  const msg = 'Hola ' + (c.nombre||'').split(' ')[0] + ', aquí va tu comprobante ' + invoiceNo(s) +
+              ' por ' + money(s.total) + ' (' + resumen + '). Fecha: ' + fmtDate(s.date) + '. Te lo adjunto.';
+  downloadBlob(invoiceNo(s)+'.pdf', p.blob);
+  if(!c.tel){
+    toast('Este cliente no tiene teléfono. Guardamos la factura para que la compartas.');
+    return;
+  }
+  const w = window.open(waLink(c.tel, msg), '_blank');
+  toast(w
+    ? 'WhatsApp abierto con el mensaje. Adjunta la factura que se descargó y envía.'
+    : 'WhatsApp fue bloqueado por el navegador. La factura se descargó.');
+}
+
+/* 3) DESCARGAR FACTURA */
+async function downloadInvoice(clientId, idx){
+  const p = await buildInvoice(clientId, idx);
+  if(!p) return;
+  downloadBlob(invoiceNo(p.s)+'.pdf', p.blob);
+  toast('Factura descargada ✓');
 }
 
 /* ---------- recordatorios ---------- */
