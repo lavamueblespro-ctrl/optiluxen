@@ -94,13 +94,15 @@ estático. No hay backend propio que desplegar.
 - **Panel** — clientes registrados, revisiones en 30 días, vendido del mes,
   canales activos, alertas de renovación anual (1 año desde la última compra)
 - **Clientes** — tabla o tablero Kanban, búsqueda, alta/edición/borrado,
-  importación masiva (`Nombre, Teléfono, Correo` por línea) y exportación CSV
+  importación masiva desde **Excel / Google Sheets** (`.xlsx`, `.xls`, `.csv`, o pegando la
+  lista con columnas separadas por tabulación) y exportación CSV
 - **Fórmulas** — OD/OI (esfera, cilindro, eje, adición), DP, tipo de lente,
   observaciones y foto de la receta (sube al bucket privado `rx`)
 - **Facturación** — ítems con lente/tratamiento/precio (cada producto con su propia fila
   y botón rojo **✕ Quitar**), descuento en **% o valor fijo en $**, total,
   factura PDF (jsPDF) y tres acciones: **compartir** (hoja nativa del celular),
-  **compartir por WhatsApp** y **descargar**
+  **compartir por WhatsApp** (el PDF viaja **adjunto**, con el mensaje ya redactado)
+  y **descargar**. No hay visor embebido: el PDF siempre sale al navegador/app del sistema.
 - **Alta de cliente con compra** — varios productos en la misma venta (varias gafas con
   especificaciones distintas) con **+ Agregar otro producto**, total en vivo y descuento
   aplicado al conjunto; al guardar se emite una sola factura con todos los ítems
