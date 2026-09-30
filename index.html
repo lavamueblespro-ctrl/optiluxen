@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OptiPanel — CRM para ópticas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<style>
+:root{
+  --navy:#170a33; --navy-2:#2b0e5e; --teal:#00d9ff; --teal-l:#d9f9ff;
+  --amber:#ff2e9a; --amber-l:#ffe1f1; --bg:#f6f4fc; --card:#ffffff;
+  --ink:#160b2e; --ink-soft:#6c6488; --line:#e6e0f5; --danger:#ff3b5c;
+  --ok:#00e6a8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0716; --card:#150b2c; --ink:#f2eefc; --ink-soft:#a99fcf; --line:#2d2154; --teal-l:#0e2e38; --amber-l:#2e0f2a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0716; --card:#150b2c; --ink:#f2eefc; --ink-soft:#a99fcf; --line:#2d2154; --teal-l:#0e2e38; --amber-l:#2e0f2a;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+h1,h2,h3{font-family:'Fraunces',serif;margin:0;font-weight:600;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+/* ---------- LOGIN ---------- */
+#login{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--navy),var(--navy-2));padding:24px;}
+.login-card{background:var(--card);border-radius:18px;padding:38px 32px;width:100%;max-width:380px;box-shadow:0 30px 60px rgba(0,0,0,.35);}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--teal);display:flex;align-items:center;justify-content:center;color:#0a0716;font-family:'Fraunces',serif;font-weight:700;box-shadow:0 0 16px rgba(0,217,255,.55);}
+.brand-name{font-family:'Fraunces',serif;font-size:20px;font-weight:600;}
+.login-card h1{font-size:24px;margin-bottom:6px;}
+.login-sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:24px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;}
+.field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);}
+.btn{border:none;border-radius:9px;padding:12px 16px;font-weight:600;font-size:14px;width:100%;}
+.btn-primary{background:var(--teal);color:#0a0716;margin-top:6px;box-shadow:0 0 20px rgba(0,217,255,.4);}
+.btn:disabled{opacity:.6;cursor:wait;}
+.btn-google{background:var(--card);color:var(--ink);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;}
+.divider{display:flex;align-items:center;gap:10px;color:var(--ink-soft);font-size:12px;margin:18px 0;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+.login-note{margin-top:18px;font-size:12px;color:var(--ink-soft);text-align:center;}
+.auth-switch{margin-top:16px;font-size:13px;color:var(--ink-soft);text-align:center;}
+.auth-switch a{color:var(--teal);font-weight:600;cursor:pointer;text-decoration:none;}
+.auth-msg{background:#ffe3ea;color:var(--danger);border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:none;}
+:root[data-theme="dark"] .auth-msg{background:#3a1220;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .auth-msg{background:#3a1220;} }
+.auth-msg.ok{background:var(--teal-l);color:#0a7ea4;}
+
+/* ---------- SHELL ---------- */
+#app{display:none;min-height:100vh;min-height:100dvh;}
+.shell{display:flex;min-height:100vh;min-height:100dvh;}
+.sidebar{width:220px;flex-shrink:0;background:linear-gradient(195deg,var(--navy),var(--navy-2));color:#eef1f6;padding:20px 14px;display:flex;flex-direction:column;padding-top:calc(20px + env(safe-area-inset-top,0px));}
+.sidebar .brand{color:#fff;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:#c7cede;font-size:14px;margin-bottom:2px;cursor:pointer;}
+.nav-item.active{background:rgba(0,217,255,.12);color:#fff;box-shadow:inset 3px 0 0 var(--teal);}
+.nav-item:hover{color:#fff;}
+.side-foot{margin-top:auto;font-size:11.5px;color:#8f9ab0;padding:10px 12px;}
+.side-foot b{display:block;color:#c7cede;font-size:12.5px;margin-bottom:6px;word-break:break-all;}
+.logout{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#c7cede;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;width:100%;}
+.logout:hover{color:#fff;border-color:var(--teal);}
+.main{flex:1;min-width:0;padding:26px 30px calc(30px + env(safe-area-inset-bottom,0px));overflow-x:hidden;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.topbar h2{font-size:22px;}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;border-radius:99px;font-weight:600;}
+.pill-ok{background:var(--teal-l);color:var(--teal);}
+.pill-warn{background:var(--amber-l);color:var(--amber);}
+.pill-danger{background:#ffe3ea;color:var(--danger);}
+:root[data-theme="dark"] .pill-danger{background:#3a1220;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .pill-danger{background:#3a1220;} }
+
+.lockbar{background:var(--danger);color:#fff;padding:12px 18px;border-radius:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13.5px;}
+.lockbar button{background:#fff;color:var(--danger);border-radius:8px;padding:8px 14px;font-weight:700;border:none;}
+
+.grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;}
+.stat .num{font-family:'Fraunces',serif;font-size:26px;}
+.stat .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+.stat::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--teal);}
+.stat:nth-child(2)::before{background:var(--amber);}
+.stat:nth-child(3)::before{background:var(--navy-2);}
+.stat:nth-child(4)::before{background:#b026ff;}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 1px 2px rgba(21,34,56,.04);}
+.card h3{font-size:15px;margin-bottom:12px;}
+.row-list{display:flex;flex-direction:column;gap:10px;}
+.row-list .rli{display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-bottom:1px solid var(--line);gap:12px;}
+.row-list .rli:last-child{border-bottom:none;}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn-sm{padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);}
+.btn-sm.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
+.btn-sm.amber{background:var(--amber);color:#fff;border-color:var(--amber);}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+.seg button{padding:8px 14px;background:var(--card);color:var(--ink-soft);border:none;font-size:13px;font-weight:600;}
+.seg button.active{background:var(--teal);color:#0a0716;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:left;color:var(--ink-soft);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;}
+td{padding:10px;border-bottom:1px solid var(--line);}
+tr.clk:hover{background:var(--teal-l);cursor:pointer;}
+.tablewrap{overflow-x:auto;}
+
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:14px;overflow-x:auto;}
+.kcol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:200px;}
+.kcol h4{font-size:12.5px;color:var(--ink-soft);text-transform:none;margin-bottom:10px;display:flex;justify-content:space-between;}
+.kcard{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;cursor:pointer;}
+.kcard b{display:block;font-size:13.5px;}
+.kcard span{color:var(--ink-soft);font-size:11.5px;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,20,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+.modal{background:var(--card);border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;}
+.modal h3{font-size:18px;margin-bottom:16px;}
+.modal .close{float:right;background:none;border:none;font-size:18px;color:var(--ink-soft);}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap;}
+.tabs button{background:none;border:none;padding:9px 12px;font-size:13px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+.tabs button.active{color:var(--teal);border-color:var(--teal);}
+.tabpane{display:none;} .tabpane.active{display:block;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:420px){.two-col{grid-template-columns:1fr;}}
+.rx-entry{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;}
+.rx-entry img{width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-top:6px;}
+.sale-item{display:grid;grid-template-columns:1.4fr 1fr .8fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+.sale-item input{padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;}
+@media(max-width:520px){.sale-item{grid-template-columns:1fr 1fr;}}
+.total-line{display:flex;justify-content:space-between;font-weight:700;margin-top:8px;font-size:14.5px;}
+.note{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);gap:14px;}
+.switch{width:40px;height:22px;background:var(--line);border-radius:99px;position:relative;cursor:pointer;flex-shrink:0;}
+.switch.on{background:var(--teal);box-shadow:0 0 10px rgba(0,217,255,.6);}
+.switch::after{content:"";position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.15s;}
+.switch.on::after{left:20px;}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;margin-bottom:16px;font-size:12.5px;color:#c7cede;gap:10px;}
+.theme-toggle .switch{width:36px;height:20px;}
+.theme-toggle .switch::after{width:16px;height:16px;}
+.theme-toggle .switch.on::after{left:18px;}
+.rx-form{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.rx-form .grp{grid-column:span 4;font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-top:4px;}
+.rx-form input{padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;font-size:13px;}
+@media(max-width:460px){.rx-form{grid-template-columns:repeat(2,1fr);} .rx-form .grp{grid-column:span 2;}}
+.rx-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
+.rx-table th,.rx-table td{padding:5px 7px;border:1px solid var(--line);text-align:center;}
+.rx-table th{background:var(--teal-l);color:var(--teal);font-weight:600;}
+.linkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.linkbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;font-size:12.5px;font-weight:600;text-decoration:none;border:1px solid var(--line);cursor:pointer;background:var(--bg);color:var(--ink);}
+.linkbtn.wa{background:#e7f7ee;color:#1f8c4d;border-color:#bfe8d0;}
+.linkbtn.mail{background:var(--teal-l);color:var(--teal);border-color:var(--teal);}
+.linkbtn.sms{background:var(--amber-l);color:var(--amber);border-color:var(--amber);}
+.linkbtn.danger{background:#ffe3ea;color:var(--danger);border-color:#ffc3ce;}
+:root[data-theme="dark"] .linkbtn.wa{background:#132a1e;border-color:#1f4a30;}
+:root[data-theme="dark"] .linkbtn.danger{background:#3a1220;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .linkbtn.danger{background:#3a1220;} }
+.due-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
+.due-card b{display:block;margin-bottom:2px;}
+.due-card span{font-size:12px;color:var(--ink-soft);}
+.busy{position:fixed;inset:0;background:rgba(10,14,20,.35);display:none;align-items:center;justify-content:center;z-index:99;}
+.busy div{background:var(--card);color:var(--ink);padding:14px 22px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+@media(max-width:760px){
+  .shell{flex-direction:column;}
+  .sidebar{width:100%;flex-direction:row;overflow-x:auto;align-items:center;padding:12px;gap:4px;}
+  .sidebar .brand{display:none;} .side-foot{display:none;} .theme-toggle{display:none;}
+  .nav-item{white-space:nowrap;margin-bottom:0;}
+  .kanban{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">OptiPanel</div></div>
+    <h1 id="auth-title">Bienvenido de nuevo</h1>
+    <p class="login-sub" id="auth-sub">Gestiona tu óptica: clientes, fórmulas y recordatorios en un solo lugar.</p>
+    <div class="auth-msg" id="auth-msg"></div>
+    <div class="field" id="auth-name-row" style="display:none;"><label>Nombre / óptica</label><input id="li-name" type="text" placeholder="Óptica Alejo"></div>
+    <div class="field"><label>Correo electrónico</label><input id="li-email" type="email" placeholder="tu@optica.com" autocomplete="email"></div>
+    <div class="field"><label>Contraseña</label><input id="li-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()"></div>
+    <button class="btn btn-primary" id="auth-btn" onclick="doAuth()">Ingresar</button>
+    <div class="divider">o</div>
+    <button class="btn btn-google" onclick="doGoogle()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 35 26.9 36 24 36c-5.4 0-9.9-3.4-11.5-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.9 3-2.9 5.4-5.6 6.9l6.3 5.3C39.9 37 44 31 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Continuar con Google
+    </button>
+    <p class="auth-switch" id="auth-switch">¿Aún no tienes cuenta? <a onclick="setAuthMode('signup')">Créala aquí</a></p>
+    <p class="login-note">Los datos se guardan en tu proyecto de Supabase, con acceso privado por usuario.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<div class="shell">
+  <div class="sidebar">
+    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">OptiPanel</div></div>
+    <div class="theme-toggle"><span>Modo noche</span><div class="switch" id="sw-theme" onclick="toggleTheme()"></div></div>
+    <div class="nav-item active" data-v="panel" onclick="setView('panel')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel</div>
+    <div class="nav-item" data-v="clientes" onclick="setView('clientes')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.5 20c.3-2.6 2-4.6 4.5-5"/></svg>Clientes</div>
+    <div class="nav-item" data-v="recordatorios" onclick="setView('recordatorios')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Recordatorios</div>
+    <div class="nav-item" data-v="suscripcion" onclick="setView('suscripcion')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Suscripción</div>
+    <div class="side-foot">
+      <b id="foot-email">—</b>
+      <div id="foot-plan">plan Pro</div>
+      <button class="logout" style="margin-top:10px;" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- PANEL -->
+    <div id="v-panel" class="view">
+      <div class="topbar"><h2>Panel</h2><span id="sub-pill" class="pill pill-ok">Suscripción activa</span></div>
+      <div id="lockbar-slot"></div>
+      <div class="grid-stats">
+        <div class="stat"><div class="num" id="st-clientes">0</div><div class="lbl">Clientes registrados</div></div>
+        <div class="stat"><div class="num" id="st-proximas">0</div><div class="lbl">Revisiones próximas (30 días)</div></div>
+        <div class="stat"><div class="num" id="st-ventas">$0</div><div class="lbl">Vendido este mes</div></div>
+        <div class="stat"><div class="num" id="st-recordatorios">0</div><div class="lbl">Recordatorios activos</div></div>
+      </div>
+      <div class="card">
+        <h3>Próximas revisiones</h3>
+        <div class="row-list" id="panel-upcoming"></div>
+      </div>
+      <div class="card">
+        <h3>Renovación de gafas (1 año desde la última compra)</h3>
+        <p class="note">Se avisa 7 días antes de cumplirse un año desde la última venta registrada al cliente.</p>
+        <div id="panel-renewal"></div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="v-clientes" class="view" style="display:none">
+      <div class="topbar">
+        <h2>Clientes</h2>
+        <div class="actions">
+          <div class="seg"><button id="seg-tabla" class="active" onclick="setClientView('tabla')">Tabla</button><button id="seg-kanban" onclick="setClientView('kanban')">Tablero</button></div>
+          <button class="btn-sm" onclick="openImport()">Importar masivo</button>
+          <button class="btn-sm" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn-sm solid" onclick="openClientForm()">+ Nuevo cliente</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;"><input id="search" oninput="renderClientes()" placeholder="Buscar por nombre o teléfono..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);"></div>
+      <div id="clientes-tabla" class="card tablewrap"></div>
+      <div id="clientes-kanban" class="kanban" style="display:none"></div>
+    </div>
+
+    <!-- RECORDATORIOS -->
+    <div id="v-recordatorios" class="view" style="display:none">
+      <div class="topbar"><h2>Recordatorios automáticos</h2></div>
+      <div class="card">
+        <h3>Canales de envío</h3>
+        <div class="toggle-row"><div><b>WhatsApp</b><div class="note">Mensaje directo al número guardado del cliente.</div></div><div class="switch on" id="sw-wa" onclick="toggleSw('wa')"></div></div>
+        <div class="toggle-row"><div><b>Correo electrónico</b><div class="note">Envío automático al correo del cliente.</div></div><div class="switch on" id="sw-email" onclick="toggleSw('email')"></div></div>
+        <div class="toggle-row" style="border-bottom:none;"><div><b>SMS</b><div class="note">Mensaje de texto corto al celular.</div></div><div class="switch" id="sw-sms" onclick="toggleSw('sms')"></div></div>
+      </div>
+      <div class="card">
+        <h3>Programación</h3>
+        <div class="field"><label>Enviar recordatorio</label>
+          <select id="rem-days" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">
+            <option value="7">7 días antes de la revisión</option>
+            <option value="15" selected>15 días antes de la revisión</option>
+            <option value="30">30 días antes de la revisión</option>
+            <option value="0">El mismo día de la revisión</option>
+          </select>
+        </div>
+        <div class="field"><label>Mensaje</label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, en OptiPanel notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
+        <div class="field"><label>Mensaje de renovación (1 año desde la compra)</label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
+        <button class="btn-sm solid" onclick="saveReminders()">Guardar configuración</button>
+        <span id="rem-saved" class="note" style="display:none;margin-left:8px;">Guardado ✓</span>
+      </div>
+      <div class="card">
+        <h3>Recordatorios pendientes de enviar</h3>
+        <p class="note">Estos son clientes cuya revisión cae dentro de la ventana configurada. El botón abre WhatsApp, tu correo o el mensaje de texto ya redactados — solo falta pulsar enviar.</p>
+        <div id="rem-due"></div>
+      </div>
+      <div class="card">
+        <h3>Historial de envíos realizados</h3>
+        <div class="row-list" id="rem-log"></div>
+      </div>
+    </div>
+
+    <!-- SUSCRIPCION -->
+    <div id="v-suscripcion" class="view" style="display:none">
+      <div class="topbar"><h2>Suscripción</h2></div>
+      <div class="card">
+        <h3>Plan actual: Pro mensual</h3>
+        <div class="row-list">
+          <div class="rli"><span>Estado</span><span id="sub-status-txt">Activa</span></div>
+          <div class="rli"><span>Próximo cobro</span><span id="sub-next">—</span></div>
+          <div class="rli"><span>Valor mensual</span><span>$129.000 COP</span></div>
+        </div>
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn-sm solid" onclick="simulatePayment()">Simular pago exitoso</button>
+          <button class="btn-sm" style="border-color:var(--danger);color:var(--danger);" onclick="simulateOverdue()">Simular pago vencido</button>
+        </div>
+        <p class="note" style="margin-top:12px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro.</p>
+      </div>
+      <div class="card">
+        <h3>Respaldo de tus datos</h3>
+        <p class="note">Todo vive en tu proyecto de Supabase (tabla <code>clients</code>, <code>prescriptions</code>, <code>sales</code>…), aislado por usuario con Row Level Security. Descarga una copia cuando quieras:</p>
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn-sm" onclick="exportCSV()">Exportar clientes (CSV)</button>
+          <button class="btn-sm" onclick="exportJSON()">Copia completa (JSON)</button>
+          <button class="btn-sm" onclick="seedDemo()">Cargar datos de ejemplo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CLIENT FORM MODAL -->
+<div class="modal-bg" id="modal-form">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-form')">✕</button>
+    <h3 id="form-title">Nuevo cliente</h3>
+    <input type="hidden" id="f-id">
+    <div class="two-col">
+      <div class="field"><label>Nombre completo</label><input id="f-nombre"></div>
+      <div class="field"><label>Teléfono / WhatsApp</label><input id="f-tel"></div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Correo electrónico</label><input id="f-correo" type="email"></div>
+      <div class="field"><label>Próxima revisión</label><input id="f-fecha" type="date"></div>
+    </div>
+    <div class="field"><label>Etapa</label>
+      <select id="f-etapa" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">
+        <option>Nuevo</option><option>Activo</option><option>Por revisar</option><option>Inactivo</option>
+      </select>
+    </div>
+    <div id="f-gafas-section" style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;">
+      <h3 style="font-size:14px;margin-bottom:4px;">Datos de la compra (opcional)</h3>
+      <p class="note" style="margin-bottom:10px;">Si el cliente ya se lleva sus gafas, agrega esto y se genera la factura automáticamente al guardar.</p>
+      <div class="two-col">
+        <div class="field"><label>Marco / montura</label><input id="f-marco" placeholder="Ej: Acetato Ray-Ban"></div>
+        <div class="field"><label>Tipo de lente</label><input id="f-tipolente" placeholder="Ej: Monofocal"></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Tratamiento</label><input id="f-tratamiento" placeholder="Ej: Antirreflejo"></div>
+        <div class="field"><label>Valor total</label><input id="f-valor" type="number" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Descuento (%)</label><input id="f-descuento" type="number" value="0" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);"></div>
+    </div>
+    <button class="btn-sm solid" style="width:100%;margin-top:6px;" id="f-save-btn" onclick="saveClient()">Guardar cliente</button>
+    <div id="f-welcome" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
+      <p class="note" id="f-welcome-note">Cliente guardado. Envíale un mensaje de bienvenida real ahora mismo:</p>
+      <div class="linkrow" id="f-welcome-links"></div>
+      <button class="btn-sm" style="width:100%;margin-top:10px;" onclick="closeModal('modal-form')">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="modal-import">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-import')">✕</button>
+    <h3>Importar clientes masivamente</h3>
+    <p class="note">Pega una lista, una por línea: Nombre, Teléfono, Correo</p>
+    <textarea id="import-text" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);" placeholder="Ana Pérez, 3001234567, ana@correo.com"></textarea>
+    <button class="btn-sm solid" style="margin-top:10px;" onclick="doImport()">Importar</button>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL MODAL -->
+<div class="modal-bg" id="modal-detail">
+  <div class="modal" style="max-width:640px;">
+    <button class="close" onclick="closeModal('modal-detail')">✕</button>
+    <h3 id="det-nombre">Cliente</h3>
+    <div class="tabs">
+      <button class="active" data-t="datos" onclick="setTab('datos')">Datos</button>
+      <button data-t="historial" onclick="setTab('historial')">Historial de fórmulas</button>
+      <button data-t="facturacion" onclick="setTab('facturacion')">Facturación</button>
+    </div>
+    <div class="tabpane active" id="tab-datos">
+      <div class="row-list">
+        <div class="rli"><span>Teléfono</span><span id="det-tel"></span></div>
+        <div class="rli"><span>Correo</span><span id="det-correo"></span></div>
+        <div class="rli"><span>Próxima revisión</span><span id="det-fecha"></span></div>
+        <div class="rli"><span>Etapa</span><span id="det-etapa"></span></div>
+      </div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn-sm" onclick="editFromDetail()">Editar datos</button>
+        <button class="btn-sm" style="border-color:var(--danger);color:var(--danger);" onclick="deleteClient()">Eliminar cliente</button>
+      </div>
+    </div>
+    <div class="tabpane" id="tab-historial">
+      <div class="rx-form">
+        <div class="grp">Ojo derecho (OD)</div>
+        <input id="rx-od-esf" placeholder="Esfera">
+        <input id="rx-od-cil" placeholder="Cilindro">
+        <input id="rx-od-eje" placeholder="Eje">
+        <input id="rx-od-add" placeholder="Adición">
+        <div class="grp">Ojo izquierdo (OI)</div>
+        <input id="rx-oi-esf" placeholder="Esfera">
+        <input id="rx-oi-cil" placeholder="Cilindro">
+        <input id="rx-oi-eje" placeholder="Eje">
+        <input id="rx-oi-add" placeholder="Adición">
+        <div class="grp">Otros datos</div>
+        <input id="rx-dp" placeholder="Distancia pupilar (DP)">
+        <input id="rx-tipo" placeholder="Tipo de lente">
+        <input id="rx-note" placeholder="Observaciones" style="grid-column:span 2;">
+      </div>
+      <div class="field"><label>Adjuntar foto de la fórmula (opcional)</label><input type="file" accept="image/*" id="rx-photo"></div>
+      <button class="btn-sm solid" onclick="addRx()">Agregar al historial</button>
+      <div id="rx-list" style="margin-top:14px;"></div>
+    </div>
+    <div class="tabpane" id="tab-facturacion">
+      <div id="sale-items"></div>
+      <button class="btn-sm" onclick="addSaleRow()">+ Agregar ítem</button>
+      <div class="field" style="margin-top:12px;"><label>Descuento total (%)</label><input id="sale-discount" type="number" value="0" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);"></div>
+      <div class="total-line"><span>Total a cobrar</span><span id="sale-total">$0</span></div>
+      <button class="btn-sm solid" style="width:100%;margin-top:10px;" onclick="saveSale()">Registrar cobro</button>
+      <div id="sale-history" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="busy" id="busy"><div id="busy-txt">Guardando…</div></div>
+
+<script>
+/* ============================================================
+   OptiPanel — lógica de aplicación sobre Supabase
+   ============================================================ */
+const CFG = window.OPTIPANEL_CONFIG || {};
+if(!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || CFG.SUPABASE_ANON_KEY.indexOf('PEGA_AQUI') === 0){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const m = document.getElementById('auth-msg');
+    m.style.display='block';
+    m.className='auth-msg';
+    m.textContent='Falta configurar la anon key en config.js';
+  });
+}
+const sb = (window.supabase && CFG.SUPABASE_URL) ? window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY) : null;
+
+let session = null;
+let state = {
+  clients: [],
+  reminders:{wa:true, email:true, sms:false, days:15, msg:'', renewalMsg:''},
+  sub:{status:'active', next:''},
+  remLog:[]
+};
+let currentClientId = null;
+let saleRows = [];
+let clientView = 'tabla';
+let authMode = 'login';
+let currentView = 'panel';
+
+const DEFAULT_MSG = 'Hola {{nombre}}, en OptiPanel notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
+const DEFAULT_RENEWAL = 'Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?';
+
+/* ---------- utilidades ---------- */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function attr(s){ return esc(s).replace(/\n/g,'&#10;'); }
+function money(n){ return '$'+Math.round(+n||0).toLocaleString('es-CO'); }
+function cleanPhone(p){ return (p||'').replace(/\D/g,''); }
+function waLink(phone,msg){ return `https://wa.me/${cleanPhone(phone)}?text=${encodeURIComponent(msg)}`; }
+function mailLink(email,subject,body){ return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
+function smsLink(phone,msg){ return `sms:${phone}?body=${encodeURIComponent(msg)}`; }
+function fillTemplate(tpl,c){ return String(tpl||'').replace(/{{nombre}}/g, (c.nombre||'').split(' ')[0]); }
+function daysUntil(dateStr){ if(!dateStr) return 9999; const d=new Date(dateStr+'T00:00:00'); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s+'T00:00:00'); if(isNaN(d)) return '—'; return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
+function addDays(dateStr,n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function busy(on, txt){ const b=document.getElementById('busy'); if(txt) document.getElementById('busy-txt').textContent=txt; b.style.display= on?'flex':'none'; }
+function authErr(e){ return (e && (e.message || e.error_description || e.error)) ? (e.message||e.error_description||e.error) : String(e); }
+
+function downloadBlob(filename, content, mime){
+  const blob = (content instanceof Blob) ? content : new Blob([content], {type: mime || 'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+/* ---------- autenticación ---------- */
+function showAuthMsg(text, ok){
+  const m = document.getElementById('auth-msg');
+  if(!text){ m.style.display='none'; return; }
+  m.style.display='block';
+  m.className = 'auth-msg' + (ok?' ok':'');
+  m.textContent = text;
+}
+function setAuthMode(mode){
+  authMode = mode;
+  const isSignup = mode==='signup';
+  document.getElementById('auth-title').textContent = isSignup? 'Crea tu cuenta' : 'Bienvenido de nuevo';
+  document.getElementById('auth-sub').textContent = isSignup
+    ? 'Regístrate para empezar a gestionar clientes, fórmulas y recordatorios.'
+    : 'Gestiona tu óptica: clientes, fórmulas y recordatorios en un solo lugar.';
+  document.getElementById('auth-name-row').style.display = isSignup? 'block':'none';
+  document.getElementById('auth-btn').textContent = isSignup? 'Crear cuenta' : 'Ingresar';
+  document.getElementById('auth-switch').innerHTML = isSignup
+    ? '¿Ya tienes cuenta? <a onclick="setAuthMode(\'login\')">Ingresa aquí</a>'
+    : '¿Aún no tienes cuenta? <a onclick="setAuthMode(\'signup\')">Créala aquí</a>';
+  document.getElementById('li-pass').autocomplete = isSignup? 'new-password':'current-password';
+  showAuthMsg('');
+}
+
+async function doAuth(){
+  if(!sb){ showAuthMsg('Configura Supabase en config.js'); return; }
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  if(!email || !pass){ showAuthMsg('Ingresa correo y contraseña.'); return; }
+  if(pass.length < 6){ showAuthMsg('La contraseña debe tener al menos 6 caracteres.'); return; }
+
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true; btn.textContent = authMode==='signup'? 'Creando…':'Ingresando…';
+  showAuthMsg('');
+
+  try{
+    if(authMode==='signup'){
+      const name = document.getElementById('li-name').value.trim();
+      const {data, error} = await sb.auth.signUp({
+        email, password: pass,
+        options: { data: { full_name: name }, emailRedirectTo: window.location.origin }
+      });
+      if(error) throw error;
+      if(data.session){ session = data.session; await enterApp(); }
+      else showAuthMsg('Cuenta creada. Revisa tu correo para confirmar el enlace y luego inicia sesión.', true);
+    } else {
+      const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
+      if(error) throw error;
+      session = data.session;
+      await enterApp();
+    }
+  }catch(err){
+    showAuthMsg(authErr(err));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = authMode==='signup'? 'Crear cuenta':'Ingresar';
+  }
+}
+
+async function doGoogle(){
+  if(!sb){ showAuthMsg('Configura Supabase en config.js'); return; }
+  const {error} = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: window.location.origin }
+  });
+  if(error) showAuthMsg(authErr(error));
+}
+
+async function doLogout(){ await sb.auth.signOut(); }
+
+async function enterApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  initTheme();
+  document.getElementById('foot-email').textContent = session.user.email || '—';
+  await loadAll();
+  renderAll();
+  if(currentView!=='panel') setView(currentView);
+}
+
+/* ---------- carga desde Supabase ---------- */
+function mapRx(r){
+  return {
+    id:r.id, date:r.date,
+    od:{esf:r.od_esf||'', cil:r.od_cil||'', eje:r.od_eje||'', add:r.od_add||''},
+    oi:{esf:r.oi_esf||'', cil:r.oi_cil||'', eje:r.oi_eje||'', add:r.oi_add||''},
+    dp:r.dp||'', tipo:r.tipo||'', note:r.note||'',
+    imgPath:r.img_path||null, img:null
+  };
+}
+function mapClient(row){
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    tel: row.tel||'',
+    correo: row.correo||'',
+    fecha: row.fecha||'',
+    etapa: row.etapa||'Nuevo',
+    rx: (row.prescriptions||[]).map(mapRx),
+    sales: (row.sales||[]).map(s=>({
+      id:s.id,
+      date:s.date,
+      discount:+s.discount||0,
+      total:+s.total||0,
+      invoiceNo:s.invoice_no,
+      items:(s.sale_items||[]).map(i=>({
+        desc:i.descripcion||'', lente:i.lente||'', trat:i.trat||'', precio:+i.precio||0
+      }))
+    }))
+  };
+}
+
+async function loadAll(){
+  if(!sb || !session) return;
+  busy(true,'Cargando tus datos…');
+  try{
+    const [{data:cl, error:e1},{data:set},{data:log},{data:prof}] = await Promise.all([
+      sb.from('clients').select('*, prescriptions(*), sales(*, sale_items(*))').order('created_at',{ascending:true}),
+      sb.from('reminder_settings').select('*').eq('user_id', session.user.id).maybeSingle(),
+      sb.from('reminder_log').select('*').order('created_at',{ascending:false}).limit(100),
+      sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
+    ]);
+    if(e1) throw e1;
+    state.clients = (cl||[]).map(mapClient);
+    if(set){
+      state.reminders = {
+        wa: set.wa!==false, email: set.email!==false, sms: !!set.sms,
+        days: set.days==null?15:+set.days,
+        msg: set.msg||DEFAULT_MSG,
+        renewalMsg: set.renewal_msg||DEFAULT_RENEWAL
+      };
+    } else {
+      state.reminders = {wa:true,email:true,sms:false,days:15,msg:DEFAULT_MSG,renewalMsg:DEFAULT_RENEWAL};
+    }
+    state.remLog = (log||[]).map(l=>({canal:l.canal, nombre:l.nombre, date:l.date}));
+    if(prof){
+      state.sub.status = prof.plan_status||'active';
+      state.sub.next = prof.plan_next_charge||'';
+    } else {
+      const n=new Date(); n.setDate(n.getDate()+30);
+      state.sub.next = n.toISOString().slice(0,10);
+    }
+    await signImages();
+  }catch(err){
+    console.error(err);
+    alert('No se pudieron cargar los datos: '+authErr(err));
+  }finally{
+    busy(false);
+  }
+}
+
+async function signImages(){
+  const paths = [];
+  state.clients.forEach(c=>c.rx.forEach(r=>{ if(r.imgPath) paths.push(r.imgPath); }));
+  if(!paths.length) return;
+  const {data, error} = await sb.storage.from('rx').createSignedUrls(paths, 60*60*24*7);
+  if(error){ console.warn('Firmas de imagen:', error); return; }
+  const map = {};
+  paths.forEach((p,i)=>{ if(data[i] && data[i].signedUrl) map[p]=data[i].signedUrl; });
+  state.clients.forEach(c=>c.rx.forEach(r=>{ if(r.imgPath) r.img = map[r.imgPath]||null; }));
+}
+
+/* ---------- persistencia ---------- */
+async function upsertReminders(){
+  const r = state.reminders;
+  await sb.from('reminder_settings').upsert({
+    user_id: session.user.id,
+    wa:r.wa, email:r.email, sms:r.sms, days:r.days,
+    msg:r.msg, renewal_msg:r.renewalMsg, updated_at:new Date().toISOString()
+  }, {onConflict:'user_id'});
+}
+async function upsertProfile(patch){
+  await sb.from('profiles').upsert(Object.assign({id: session.user.id}, patch), {onConflict:'id'});
+}
+async function nextInvoiceNo(){
+  const {data, error} = await sb.rpc('next_invoice_no');
+  if(error){ console.warn('next_invoice_no:', error); return null; }
+  return data;
+}
+
+/* ---------- tema ---------- */
+function initTheme(){
+  const saved = localStorage.getItem('optipanel_theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  const isDark = saved==='dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.getElementById('sw-theme').classList.toggle('on', isDark);
+}
+function toggleTheme(){
+  const isDark = document.getElementById('sw-theme').classList.toggle('on');
+  const theme = isDark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('optipanel_theme', theme);
+}
+
+/* ---------- navegación ---------- */
+function setView(v){
+  currentView = v;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.v===v));
+  document.querySelectorAll('.view').forEach(el=>el.style.display='none');
+  document.getElementById('v-'+v).style.display='block';
+  if(v==='panel') renderPanel();
+  if(v==='clientes') renderClientes();
+  if(v==='recordatorios') renderReminders();
+  if(v==='suscripcion') renderSub();
+}
+
+function renderAll(){
+  renderLock(); renderPanel(); renderClientes(); renderReminders(); renderSub();
+}
+
+function renderLock(){
+  const locked = state.sub.status==='overdue';
+  document.getElementById('sub-pill').textContent = locked? 'Suscripción vencida' : 'Suscripción activa';
+  document.getElementById('sub-pill').className = 'pill ' + (locked? 'pill-danger':'pill-ok');
+  const slot = document.getElementById('lockbar-slot');
+  slot.innerHTML = locked ? `<div class="lockbar"><span>Tu pago mensual está vencido. El acceso a Clientes y Recordatorios está bloqueado hasta regularizar el cobro.</span><button onclick="simulatePayment()">Pagar ahora</button></div>` : '';
+  document.querySelectorAll('.nav-item[data-v="clientes"], .nav-item[data-v="recordatorios"]').forEach(n=>{
+    n.style.opacity = locked? .45 : 1;
+    n.style.pointerEvents = locked? 'none':'auto';
+  });
+}
+
+/* ---------- panel ---------- */
+function lastSaleDate(c){
+  if(!c.sales||!c.sales.length) return null;
+  return c.sales.map(s=>s.date).sort().slice(-1)[0];
+}
+function renderPanel(){
+  document.getElementById('st-clientes').textContent = state.clients.length;
+  const soon = state.clients.filter(c=>c.fecha && daysUntil(c.fecha)<=30 && daysUntil(c.fecha)>=0);
+  document.getElementById('st-proximas').textContent = soon.length;
+  let ventas=0; const thisMonth=today().slice(0,7);
+  state.clients.forEach(c=>c.sales.forEach(s=>{ if((s.date||'').slice(0,7)===thisMonth) ventas+=+s.total; }));
+  document.getElementById('st-ventas').textContent = money(ventas);
+  const activeChans = ['wa','email','sms'].filter(k=>state.reminders[k]).length;
+  document.getElementById('st-recordatorios').textContent = activeChans;
+
+  const list = document.getElementById('panel-upcoming');
+  list.innerHTML = soon.sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha)).map(c=>
+    `<div class="rli"><span>${esc(c.nombre)}</span><span>${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span></div>`
+  ).join('') || '<div class="note">No hay revisiones próximas en 30 días.</div>';
+
+  renderRenewalAlerts();
+}
+
+function renderRenewalAlerts(){
+  const due = state.clients.map(c=>{
+    const last = lastSaleDate(c);
+    if(!last) return null;
+    const renewDate = addDays(last,365);
+    const dleft = daysUntil(renewDate);
+    return (dleft<=7 && dleft>=-30) ? {c, renewDate, dleft} : null;
+  }).filter(Boolean);
+
+  const box = document.getElementById('panel-renewal');
+  if(!box) return;
+  box.innerHTML = due.map(({c,renewDate,dleft})=>{
+    const msg = fillTemplate(state.reminders.renewalMsg || DEFAULT_RENEWAL, c);
+    let links='';
+    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Es hora de renovar tus gafas',msg))}" onclick="logSend(this)">Correo</a>`;
+    const label = dleft>=0 ? `en ${dleft} días` : `hace ${-dleft} días`;
+    return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Cumple el año el ${fmtDate(renewDate)} · ${label}</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo.</span>'}</div></div>`;
+  }).join('') || '<div class="note">Ningún cliente está por cumplir el año de su última compra.</div>';
+}
+
+/* ---------- clientes ---------- */
+function setClientView(v){
+  clientView=v;
+  document.getElementById('seg-tabla').classList.toggle('active', v==='tabla');
+  document.getElementById('seg-kanban').classList.toggle('active', v==='kanban');
+  document.getElementById('clientes-tabla').style.display = v==='tabla'?'block':'none';
+  document.getElementById('clientes-kanban').style.display = v==='kanban'?'grid':'none';
+  renderClientes();
+}
+
+function renderClientes(){
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  const filtered = state.clients.filter(c=>
+    (c.nombre||'').toLowerCase().includes(q) || (c.tel||'').includes(q) || (c.correo||'').toLowerCase().includes(q)
+  );
+  if(clientView==='tabla'){
+    const rows = filtered.map(c=>`
+      <tr class="clk" onclick="openDetail('${c.id}')">
+        <td>${esc(c.nombre)}</td><td>${esc(c.tel)}</td><td>${esc(c.correo)}</td>
+        <td>${fmtDate(c.fecha)}</td><td>${esc(c.etapa)}</td>
+      </tr>`).join('');
+    document.getElementById('clientes-tabla').innerHTML = `<table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Correo</th><th>Próxima revisión</th><th>Etapa</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="note" style="padding:16px;">Sin resultados</td></tr>'}</tbody></table>`;
+  } else {
+    const stages = ["Nuevo","Activo","Por revisar","Inactivo"];
+    document.getElementById('clientes-kanban').innerHTML = stages.map(st=>{
+      const items = filtered.filter(c=>c.etapa===st);
+      return `<div class="kcol"><h4>${st}<span>${items.length}</span></h4>${items.map(c=>`<div class="kcard" onclick="openDetail('${c.id}')"><b>${esc(c.nombre)}</b><span>${fmtDate(c.fecha)}</span></div>`).join('')}</div>`;
+    }).join('');
+  }
+}
+
+function openClientForm(id){
+  document.getElementById('form-title').textContent = id? 'Editar cliente' : 'Nuevo cliente';
+  const c = id? state.clients.find(x=>x.id===id) : null;
+  document.getElementById('f-id').value = id||'';
+  document.getElementById('f-nombre').value = c?c.nombre:'';
+  document.getElementById('f-tel').value = c?c.tel:'';
+  document.getElementById('f-correo').value = c?c.correo:'';
+  document.getElementById('f-fecha').value = c?c.fecha:'';
+  document.getElementById('f-etapa').value = c?c.etapa:'Nuevo';
+  ['f-marco','f-tipolente','f-tratamiento','f-valor'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('f-descuento').value = 0;
+  document.getElementById('f-gafas-section').style.display = id? 'none' : 'block';
+  document.getElementById('f-welcome').style.display='none';
+  document.getElementById('f-save-btn').style.display='block';
+  document.getElementById('modal-form').style.display='flex';
+}
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+async function saveClient(){
+  const id = document.getElementById('f-id').value;
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if(!nombre){ showFormAlert('El nombre es obligatorio'); return; }
+
+  const payload = {
+    nombre,
+    tel: document.getElementById('f-tel').value.trim(),
+    correo: document.getElementById('f-correo').value.trim(),
+    fecha: document.getElementById('f-fecha').value || null,
+    etapa: document.getElementById('f-etapa').value
+  };
+
+  document.getElementById('f-save-btn').disabled = true;
+  busy(true, id? 'Guardando cambios…':'Guardando cliente…');
+  try{
+    if(id){
+      const {error} = await sb.from('clients').update(payload).eq('id', id);
+      if(error) throw error;
+      const c = state.clients.find(x=>x.id===id);
+      Object.assign(c, payload);
+      busy(false);
+      closeModal('modal-form'); renderAll();
+      return;
+    }
+
+    const {data: row, error} = await sb.from('clients').insert(payload).select().single();
+    if(error) throw error;
+
+    const c = {id:row.id, rx:[], sales:[], ...payload};
+    state.clients.push(c);
+
+    const marco = document.getElementById('f-marco').value.trim();
+    const tipolente = document.getElementById('f-tipolente').value.trim();
+    const tratamiento = document.getElementById('f-tratamiento').value.trim();
+    const valor = +document.getElementById('f-valor').value || 0;
+    const descuento = +document.getElementById('f-descuento').value || 0;
+    let newSale = null;
+
+    if(valor>0 || marco || tipolente || tratamiento){
+      newSale = await insertSale(c.id, {
+        date: today(),
+        items:[{desc:marco||'Compra', lente:tipolente, trat:tratamiento, precio:valor}],
+        discount: descuento,
+        total: valor - (valor*descuento/100)
+      });
+      c.sales.push(newSale);
+    }
+    busy(false);
+    renderAll();
+
+    const welcomeMsg = `Hola ${(c.nombre||'').split(' ')[0]}, gracias por registrarte en nuestra óptica. Guardaremos aquí tu historial y te avisaremos antes de tu próxima revisión.`;
+    let links='';
+    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,welcomeMsg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'¡Bienvenido a la óptica!',welcomeMsg))}" onclick="logSend(this)">Correo</a>`;
+    if(newSale) links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${c.sales.length-1})">📄 Factura PDF</button>`;
+    document.getElementById('f-welcome-note').textContent = newSale
+      ? `Cliente y factura ${invoiceNo(newSale)} guardados. Envía la factura o un saludo:`
+      : 'Cliente guardado. Envíale un mensaje de bienvenida real ahora mismo:';
+    document.getElementById('f-welcome-links').innerHTML = links || '<span class="note">Agrega teléfono o correo para poder enviar un saludo.</span>';
+    document.getElementById('f-welcome').style.display='block';
+    document.getElementById('f-save-btn').style.display='none';
+    if(newSale) await downloadInvoice(c.id, c.sales.length-1);
+  }catch(err){
+    busy(false);
+    alert('No se pudo guardar: '+authErr(err));
+  }finally{
+    const b = document.getElementById('f-save-btn');
+    b.disabled = false;
+  }
+}
+function showFormAlert(msg){ alert(msg); }
+
+async function deleteClient(){
+  const c = state.clients.find(x=>x.id===currentClientId);
+  if(!c) return;
+  if(!confirm(`¿Eliminar a "${c.nombre}"? Se borran sus fórmulas, ventas y facturas. Esta acción no se puede deshacer.`)) return;
+  busy(true,'Eliminando…');
+  try{
+    const {error} = await sb.from('clients').delete().eq('id', c.id);
+    if(error) throw error;
+    state.clients = state.clients.filter(x=>x.id!==c.id);
+    closeModal('modal-detail');
+    renderAll();
+  }catch(err){ alert('No se pudo eliminar: '+authErr(err)); }
+  finally{ busy(false); }
+}
+
+/* ---------- importar / exportar ---------- */
+function openImport(){ document.getElementById('modal-import').style.display='flex'; }
+
+async function doImport(){
+  const lines = document.getElementById('import-text').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){ alert('Pega al menos una línea.'); return; }
+  const rows = lines.map(l=>{
+    const [nombre,tel,correo] = l.split(',').map(s=>(s||'').trim());
+    return {nombre, tel:tel||'', correo:correo||'', fecha:null, etapa:'Nuevo'};
+  }).filter(r=>r.nombre);
+
+  busy(true, `Importando ${rows.length} clientes…`);
+  try{
+    const {error} = await sb.from('clients').insert(rows);
+    if(error) throw error;
+    document.getElementById('import-text').value='';
+    closeModal('modal-import');
+    await loadAll(); renderAll();
+    alert(`Se importaron ${rows.length} clientes.`);
+  }catch(err){ alert('Error al importar: '+authErr(err)); }
+  finally{ busy(false); }
+}
+
+function exportCSV(){
+  const rows = [['Nombre','Teléfono','Correo','Próxima revisión','Etapa','Último cobro','Total gastado']];
+  state.clients.forEach(c=>{
+    const gastado = c.sales.reduce((a,s)=>a+(+s.total||0),0);
+    rows.push([c.nombre, c.tel, c.correo, c.fecha||'', c.etapa, lastSaleDate(c)||'', gastado]);
+  });
+  const csv = rows.map(r=>r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  downloadBlob('clientes-optipanel.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+}
+
+function exportJSON(){
+  downloadBlob('backup-optipanel.json', JSON.stringify(state, null, 2), 'application/json');
+}
+
+async function seedDemo(){
+  if(state.clients.length && !confirm('Se añadirán 3 clientes de ejemplo a tu base. ¿Continuar?')) return;
+  const d = (n)=>{ const x=new Date(); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+  const demo = [
+    {nombre:'Ana Pérez', tel:'3001234567', correo:'ana@correo.com', fecha:d(9), etapa:'Activo'},
+    {nombre:'Carlos Gómez', tel:'3109876543', correo:'carlos@correo.com', fecha:d(25), etapa:'Por revisar'},
+    {nombre:'Laura Martínez', tel:'3157654321', correo:'laura@correo.com', fecha:d(45), etapa:'Nuevo'}
+  ];
+  busy(true,'Cargando ejemplo…');
+  try{
+    const {data: rows, error} = await sb.from('clients').insert(demo).select();
+    if(error) throw error;
+    const ana = rows.find(r=>r.nombre==='Ana Pérez');
+    if(ana){
+      const no = await nextInvoiceNo();
+      const {data: sale} = await sb.from('sales').insert({
+        client_id: ana.id, date: d(-360), discount:0, total:280000, invoice_no:no
+      }).select().single();
+      if(sale) await sb.from('sale_items').insert({sale_id:sale.id, descripcion:'Montura acetato', lente:'Monofocal', trat:'Antirreflejo', precio:280000});
+    }
+    await loadAll(); renderAll();
+  }catch(err){ alert('No se pudo cargar el ejemplo: '+authErr(err)); }
+  finally{ busy(false); }
+}
+
+/* ---------- detalle de cliente ---------- */
+function openDetail(id){
+  currentClientId = id;
+  const c = state.clients.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('det-nombre').textContent = c.nombre;
+  document.getElementById('det-tel').textContent = c.tel||'—';
+  document.getElementById('det-correo').textContent = c.correo||'—';
+  document.getElementById('det-fecha').textContent = fmtDate(c.fecha);
+  document.getElementById('det-etapa').textContent = c.etapa;
+  setTab('datos');
+  renderRx(c); saleRows=[]; renderSaleRows(); renderSaleHistory(c);
+  document.getElementById('modal-detail').style.display='flex';
+}
+function editFromDetail(){ closeModal('modal-detail'); openClientForm(currentClientId); }
+
+function setTab(t){
+  document.querySelectorAll('#modal-detail .tabs button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  document.querySelectorAll('#modal-detail .tabpane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+/* ---------- fórmulas ---------- */
+function renderRx(c){
+  document.getElementById('rx-list').innerHTML = (c.rx||[]).slice().reverse().map(r=>`
+    <div class="rx-entry"><b>${fmtDate(r.date)}</b> — ${esc(r.tipo||'Fórmula')}${r.dp?` · DP ${esc(r.dp)}`:''}
+      <table class="rx-table"><tr><th></th><th>Esfera</th><th>Cilindro</th><th>Eje</th><th>Adición</th></tr>
+      <tr><td>OD</td><td>${esc(r.od.esf)||'—'}</td><td>${esc(r.od.cil)||'—'}</td><td>${esc(r.od.eje)||'—'}</td><td>${esc(r.od.add)||'—'}</td></tr>
+      <tr><td>OI</td><td>${esc(r.oi.esf)||'—'}</td><td>${esc(r.oi.cil)||'—'}</td><td>${esc(r.oi.eje)||'—'}</td><td>${esc(r.oi.add)||'—'}</td></tr></table>
+      ${r.note?`<div class="note" style="margin-top:6px;">${esc(r.note)}</div>`:''}${r.img?`<img src="${attr(r.img)}">`:''}</div>
+  `).join('') || '<div class="note">Sin registros previos.</div>';
+}
+
+async function addRx(){
+  const c = state.clients.find(x=>x.id===currentClientId);
+  if(!c) return;
+  const file = document.getElementById('rx-photo').files[0];
+  const val = id => document.getElementById(id).value.trim();
+  const entry = {
+    date: today(),
+    od:{esf:val('rx-od-esf'), cil:val('rx-od-cil'), eje:val('rx-od-eje'), add:val('rx-od-add')},
+    oi:{esf:val('rx-oi-esf'), cil:val('rx-oi-cil'), eje:val('rx-oi-eje'), add:val('rx-oi-add')},
+    dp:val('rx-dp'), tipo:val('rx-tipo'), note:val('rx-note'),
+    imgPath:null, img:null
+  };
+
+  busy(true,'Guardando fórmula…');
+  try{
+    if(file){
+      const ext = (file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+      const path = `${session.user.id}/${c.id}/${Date.now()}.${ext}`;
+      const {error: upErr} = await sb.storage.from('rx').upload(path, file, {upsert:true, contentType:file.type});
+      if(upErr) throw upErr;
+      entry.imgPath = path;
+      const {data: signed} = await sb.storage.from('rx').createSignedUrl(path, 60*60*24*7);
+      if(signed) entry.img = signed.signedUrl;
+    }
+
+    const {data: row, error} = await sb.from('prescriptions').insert({
+      client_id: c.id,
+      date: entry.date,
+      od_esf: entry.od.esf, od_cil: entry.od.cil, od_eje: entry.od.eje, od_add: entry.od.add,
+      oi_esf: entry.oi.esf, oi_cil: entry.oi.cil, oi_eje: entry.oi.eje, oi_add: entry.oi.add,
+      dp: entry.dp, tipo: entry.tipo, note: entry.note,
+      img_path: entry.imgPath
+    }).select().single();
+    if(error) throw error;
+    entry.id = row.id;
+
+    c.rx.push(entry);
+    renderRx(c);
+    ['rx-od-esf','rx-od-cil','rx-od-eje','rx-od-add','rx-oi-esf','rx-oi-cil','rx-oi-eje','rx-oi-add','rx-dp','rx-tipo','rx-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('rx-photo').value='';
+  }catch(err){
+    alert('No se pudo guardar la fórmula: '+authErr(err));
+  }finally{ busy(false); }
+}
+
+/* ---------- facturación ---------- */
+function addSaleRow(){ saleRows.push({desc:'Montura', lente:'', trat:'', precio:0}); renderSaleRows(); }
+function renderSaleRows(){
+  document.getElementById('sale-items').innerHTML = saleRows.map((r,i)=>`
+    <div class="sale-item">
+      <input placeholder="Ítem (montura/lente/tratamiento)" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
+      <input placeholder="Tipo de lente" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
+      <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value; calcTotal()">
+      <input placeholder="Tratamiento" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
+      <button class="btn-sm" onclick="saleRows.splice(${i},1); renderSaleRows();">✕</button>
+    </div>`).join('');
+  calcTotal();
+}
+function calcTotal(){
+  const sub = saleRows.reduce((a,r)=>a+(+r.precio||0),0);
+  const disc = +document.getElementById('sale-discount').value||0;
+  document.getElementById('sale-total').textContent = money(sub - (sub*disc/100));
+}
+document.addEventListener('input', e=>{ if(e.target.id==='sale-discount') calcTotal(); });
+
+async function insertSale(clientId, s){
+  const no = await nextInvoiceNo();
+  const {data: sale, error} = await sb.from('sales').insert({
+    client_id: clientId,
+    date: s.date,
+    discount: +s.discount||0,
+    total: +s.total||0,
+    invoice_no: no
+  }).select().single();
+  if(error) throw error;
+
+  const items = (s.items||[]).map(i=>({
+    sale_id: sale.id,
+    descripcion: i.desc||'',
+    lente: i.lente||'',
+    trat: i.trat||'',
+    precio: +i.precio||0
+  }));
+  if(items.length){
+    const {error: iErr} = await sb.from('sale_items').insert(items);
+    if(iErr) throw iErr;
+  }
+  return {
+    id: sale.id, date: sale.date, discount:+sale.discount||0,
+    total:+sale.total||0, invoiceNo: sale.invoice_no,
+    items: s.items.map(i=>({desc:i.desc||'', lente:i.lente||'', trat:i.trat||'', precio:+i.precio||0}))
+  };
+}
+
+async function saveSale(){
+  const c = state.clients.find(x=>x.id===currentClientId);
+  if(!c) return;
+  const sub = saleRows.reduce((a,r)=>a+(+r.precio||0),0);
+  const disc = +document.getElementById('sale-discount').value||0;
+  const total = sub - (sub*disc/100);
+  if(!saleRows.length){ alert('Agrega al menos un ítem'); return; }
+
+  busy(true,'Registrando cobro…');
+  try{
+    const sale = await insertSale(c.id, {date:today(), items:saleRows, discount:disc, total});
+    c.sales.push(sale);
+    saleRows=[]; renderSaleRows(); renderSaleHistory(c); renderPanel();
+  }catch(err){ alert('No se pudo registrar el cobro: '+authErr(err)); }
+  finally{ busy(false); }
+}
+
+function renderSaleHistory(c){
+  document.getElementById('sale-history').innerHTML =
+    '<h3 style="font-size:13.5px;margin-bottom:8px;">Historial de cobros</h3>' +
+    ((c.sales||[]).slice().reverse().map((s,ri)=>{
+      const idx = c.sales.length-1-ri;
+      const label = s.items.map(i=>i.desc).filter(Boolean).join(', ')||'Ítems';
+      return `<div class="rli" style="border-bottom:1px solid var(--line);padding:8px 0;flex-direction:column;align-items:flex-start;gap:6px;">
+        <div style="display:flex;justify-content:space-between;width:100%;gap:10px;"><span>${fmtDate(s.date)} · ${esc(label)}</span><span>${money(s.total)}</span></div>
+        <div class="linkrow">
+          <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">📄 Factura PDF</button>
+          <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">Compartir por WhatsApp</button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="note">Sin cobros registrados.</div>');
+}
+
+function invoiceNo(s){ return 'FAC-' + String(s.invoiceNo||0).padStart(5,'0'); }
+
+function buildInvoicePDF(c, s){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Comprobante de venta', 14, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(invoiceNo(s), 14, 25);
+  doc.text('Fecha: ' + fmtDate(s.date), 14, 31);
+  doc.text('Cliente: ' + c.nombre, 14, 40);
+  doc.text('Teléfono: ' + (c.tel||'—'), 14, 46);
+  doc.text('Correo: ' + (c.correo||'—'), 14, 52);
+  let y = 64;
+  doc.setFont('helvetica','bold');
+  doc.text('Concepto', 14, y); doc.text('Tipo de lente', 84, y); doc.text('Tratamiento', 134, y); doc.text('Precio', 180, y);
+  doc.setFont('helvetica','normal'); y+=6;
+  doc.setLineWidth(0.2); doc.line(14, y-4, 196, y-4);
+  s.items.forEach(it=>{
+    doc.text(String(it.desc||'—').slice(0,32), 14, y);
+    doc.text(String(it.lente||'—').slice(0,22), 84, y);
+    doc.text(String(it.trat||'—').slice(0,22), 134, y);
+    doc.text(money(it.precio||0), 180, y);
+    y+=7;
+  });
+  y+=4; doc.line(14, y-4, 196, y-4);
+  const sub = s.items.reduce((a,i)=>a+(+i.precio||0),0);
+  doc.text('Subtotal: ' + money(sub), 140, y); y+=6;
+  doc.text('Descuento: ' + (s.discount||0) + '%', 140, y); y+=6;
+  doc.setFont('helvetica','bold');
+  doc.text('Total: ' + money(s.total), 140, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(140);
+  doc.text('Comprobante interno de venta, no constituye factura electrónica válida ante la DIAN.', 14, 285);
+  return doc;
+}
+
+async function downloadInvoice(clientId, idx){
+  const c = state.clients.find(x=>x.id===clientId);
+  if(!c) return;
+  const s = c.sales[idx];
+  if(!s.invoiceNo){
+    const no = await nextInvoiceNo();
+    if(no){
+      s.invoiceNo = no;
+      await sb.from('sales').update({invoice_no:no}).eq('id', s.id);
+    }
+  }
+  const doc = buildInvoicePDF(c,s);
+  downloadBlob(invoiceNo(s)+'.pdf', doc.output('blob'));
+}
+
+async function shareInvoiceWhatsApp(clientId, idx){
+  const c = state.clients.find(x=>x.id===clientId);
+  if(!c) return;
+  const s = c.sales[idx];
+  if(!s.invoiceNo){
+    const no = await nextInvoiceNo();
+    if(no){ s.invoiceNo = no; await sb.from('sales').update({invoice_no:no}).eq('id', s.id); }
+  }
+  const doc = buildInvoicePDF(c,s);
+  const blob = doc.output('blob');
+  try{
+    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
+      return;
+    }
+  }catch(e){ /* cancelado o no soportado: seguimos con el texto */ }
+  const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
+  const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}.`;
+  window.open(waLink(c.tel, msg), '_blank');
+}
+
+/* ---------- recordatorios ---------- */
+function toggleSw(k){ state.reminders[k]=!state.reminders[k]; document.getElementById('sw-'+k).classList.toggle('on'); renderPanel(); }
+function renderReminders(){
+  ['wa','email','sms'].forEach(k=> document.getElementById('sw-'+k).classList.toggle('on', !!state.reminders[k]));
+  document.getElementById('rem-days').value = state.reminders.days;
+  document.getElementById('rem-msg').value = state.reminders.msg || DEFAULT_MSG;
+  document.getElementById('rem-renewal-msg').value = state.reminders.renewalMsg || DEFAULT_RENEWAL;
+
+  const due = state.clients.filter(c=>c.fecha && daysUntil(c.fecha)<=state.reminders.days && daysUntil(c.fecha)>=0);
+  document.getElementById('rem-due').innerHTML = due.map(c=>{
+    const msg = fillTemplate(state.reminders.msg || DEFAULT_MSG, c);
+    let links='';
+    if(state.reminders.wa && c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(state.reminders.email && c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — OptiPanel',msg))}" onclick="logSend(this)">Correo</a>`;
+    if(state.reminders.sms && c.tel) links+=`<a class="linkbtn sms" data-canal="SMS" data-nombre="${attr(c.nombre)}" href="${attr(smsLink(c.tel,msg))}" onclick="logSend(this)">SMS</a>`;
+    return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Revisión: ${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo, o el canal está desactivado.</span>'}</div></div>`;
+  }).join('') || '<div class="note">Ningún cliente está dentro de la ventana de recordatorio en este momento.</div>';
+
+  document.getElementById('rem-log').innerHTML = state.remLog.slice().reverse().map(l=>
+    `<div class="rli"><span>${esc(l.canal)} → ${esc(l.nombre)}</span><span>${fmtDate(l.date)}</span></div>`
+  ).join('') || '<div class="note">Aún no se ha enviado ningún recordatorio.</div>';
+}
+
+async function logSend(el){
+  const canal = el.dataset.canal;
+  const nombre = el.dataset.nombre;
+  state.remLog.push({canal, nombre, date: today()});
+  try{
+    await sb.from('reminder_log').insert({canal, nombre, date: today()});
+  }catch(e){ console.warn('logSend:', e); }
+  setTimeout(renderReminders, 300);
+}
+
+async function saveReminders(){
+  state.reminders.days = +document.getElementById('rem-days').value;
+  state.reminders.msg = document.getElementById('rem-msg').value;
+  state.reminders.renewalMsg = document.getElementById('rem-renewal-msg').value;
+  try{
+    await upsertReminders();
+  }catch(e){ alert('No se pudo guardar: '+authErr(e)); return; }
+  renderReminders(); renderRenewalAlerts();
+  const s = document.getElementById('rem-saved'); s.style.display='inline';
+  setTimeout(()=>s.style.display='none',1800);
+}
+
+/* ---------- suscripción ---------- */
+function renderSub(){
+  document.getElementById('sub-status-txt').textContent = state.sub.status==='active'?'Activa':'Vencida';
+  document.getElementById('sub-next').textContent = fmtDate(state.sub.next);
+}
+async function simulatePayment(){
+  const n=new Date(); n.setDate(n.getDate()+30);
+  state.sub.status='active'; state.sub.next=n.toISOString().slice(0,10);
+  try{ await upsertProfile({plan_status:'active', plan_next_charge: state.sub.next}); }
+  catch(e){ console.warn(e); }
+  renderAll();
+}
+async function simulateOverdue(){
+  state.sub.status='overdue';
+  try{ await upsertProfile({plan_status:'overdue'}); }
+  catch(e){ console.warn(e); }
+  renderAll();
+}
+
+/* ---------- arranque ---------- */
+(async function boot(){
+  if(!sb) return;
+  // redirección OAuth / confirmación de correo
+  const {data:{session: s}} = await sb.auth.getSession();
+  if(s){ session = s; await enterApp(); }
+  else document.getElementById('login').style.display='flex';
+
+  sb.auth.onAuthStateChange(async (event, s)=>{
+    if(event==='SIGNED_IN' && s && (!session || session.user.id!==s.user.id)){
+      session = s;
+      await enterApp();
+    }
+    if(event==='SIGNED_OUT'){
+      session = null;
+      state = {clients:[], reminders:{wa:true,email:true,sms:false,days:15,msg:DEFAULT_MSG,renewalMsg:DEFAULT_RENEWAL}, sub:{status:'active',next:''}, remLog:[]};
+      document.getElementById('app').style.display='none';
+      document.getElementById('login').style.display='flex';
+      setAuthMode('login');
+      showAuthMsg('');
+      document.getElementById('li-pass').value='';
+    }
+  });
+})();
+</script>
+</body>
+</html>

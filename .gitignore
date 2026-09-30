@@ -1,0 +1,31 @@
+# Dependencias
+node_modules/
+
+# Entorno local
+.env
+.env.local
+*.local
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Logs y temporales
+*.log
+npm-debug.log*
+tmp/
+temp/
+
+# Credenciales — NUNCA subir
+# (los tokens de Supabase van en config.js solo si son la anon key pública;
+#  service_role / sb_secret_ / sbp_ van siempre fuera del repositorio)
+service-role-key.*
+secret-key.*
+*.pem
+*.key
