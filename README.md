@@ -15,6 +15,9 @@ del prototipo), con autenticación real y aislamiento de datos por usuario.
 | `index.html` | La aplicación completa (HTML + CSS + JS) |
 | `config.js` | **Único archivo que debes editar**: URL y anon key de tu proyecto |
 | `supabase-schema.sql` | Tablas, políticas RLS, bucket de fotos y contador de facturas |
+| `security-hardening.sql` | Endurecimiento: privilegios mínimos y bloqueo de TRUNCATE |
+| `_headers` | Cabeceras de seguridad que Netlify añade a cada respuesta |
+| `serve.js` | Servidor local (`node serve.js` → `http://localhost:3000`) |
 | `README.md` | Este archivo |
 
 ---
@@ -114,6 +117,62 @@ estático. No hay backend propio que desplegar.
 - **Respaldo** — descarga CSV y JSON completos (ya no dependen de
   `window.claude.use('downloads')`)
 - Modo noche, diseño responsive
+
+---
+
+## Seguridad
+
+Auditoría hecha contra la base **en producción** (no contra el archivo del disco),
+con comprobación antes/después de cada cambio.
+
+### Qué se verificó
+
+| Área | Estado |
+|---|---|
+| Tokens, claves privadas y secretos en el repo y en los 9 commits del historial | ✅ **cero** (ni `sbp_`, ni `GOCSPX`, ni `service_role`, ni claves privadas) |
+| RLS activo en las 8 tablas | ✅ verificado en producción |
+| Políticas solo para `authenticated` (nada para `anon`) | ✅ |
+| Buckets `rx` y `branding` privados con carpeta por usuario | ✅ |
+| Inyección XSS (17 puntos de `innerHTML`) | ✅ todos escapan con `esc()` / `attr()` |
+| Inyección de fórmulas al exportar CSV | ✅ blindado (valores `= + - @` llevan `'`) |
+| Apertura de enlaces externos (`target="_blank"`) | ✅ `rel="noopener noreferrer"` |
+| CDN con versión flotante (`supabase-js@2`) | ✅ fijado a `2.117.2` |
+| Servidor local: path traversal y respuestas 500 | ✅ corregido (`400`/`403` sin filtrar errores) |
+
+### Qué se endureció (`security-hardening.sql`, ya aplicado)
+
+1. **El rol `anon` perdió todo privilegio** sobre las 8 tablas y las funciones.
+   La anon key es pública por diseño, así que ya no sirve para nada.
+2. **TRUNCATE/REFERENCES/TRIGGER revocados** en `anon` y `authenticated`.
+   Hallazgo verificado: con una política que negaba todo, un `TRUNCATE`
+   ejecutado como `anon` **igual vació la tabla** (RLS no cubre TRUNCATE).
+3. **`counters.invoice_seq` ya no es editable** desde la web: los números de
+   factura solo salen por `next_invoice_no()`.
+4. **Longitud de contraseña mínima: 6 → 12** (verificado con un registro real:
+   GoTrue responde `weak_password`).
+
+### Comprobación integral (22/22)
+
+Con un usuario de prueba real (insert + login + JWT) se comprobó que sigue
+funcionando todo: lectura de las 7 tablas, altas de clientes, `UPSERT` de
+recordatorios, edición del perfil, emisión de facturas (`next_invoice_no`),
+storage privado, y que **anon recibe 401**, que **un usuario no ve los datos
+de otro**, que **el contador no se puede manipular (403)** y que **una
+contraseña de 6 caracteres ya no se acepta (422)**.
+
+### Pendiente / decisión
+
+- **`profiles.plan_status` es editable por el propio usuario** (es el que usa el
+  botón *Simular pago*). Cualquiera podría marcarse la suscripción como activa.
+  No es una fuga de datos, sino un agujero de facturación: se cierra
+  descomentando el bloque 6 de `security-hardening.sql`, a cambio de que el botón
+  *Pagar ahora* deje de funcionar hasta conectar una pasarela real.
+- La clave `anon` **no se puede ocultar**: viaja al navegador por definición.
+  Lo que la hace inofensiva es que ya no abre nada.
+- `config.js` vive en el repositorio porque Netlify lo despliega desde ahí;
+  su contenido es público, no un secreto.
+- Residual: la sesión se guarda en `localStorage`, así que cualquier XSS futuro
+  podría robarla. Por eso se mantienen el escape estricto y la CSP.
 
 ---
 

@@ -1,0 +1,41 @@
+/*
+  # ── Optiluxen · cabeceras de seguridad (Netlify) ──────────────
+  # Documentación: https://docs.netlify.com/routing/headers/
+
+  # Clickjacking: nadie puede embeber el panel dentro de otro sitio.
+  X-Frame-Options: DENY
+
+  # El navegador no "adivina" el tipo de archivo: evita que un .png
+  # servido como HTML se ejecute como script.
+  X-Content-Type-Options: nosniff
+
+  # Solo manda la URL base (nunca la página completa ni los datos) al
+  # abrir WhatsApp, correo, Google Fonts, etc.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Desconecta la pestaña de otras ventanas (refuerzo de noopener).
+  Cross-Origin-Opener-Policy: same-origin
+
+  # Nunca se interpreta como Flash/PDF externo.
+  X-Permitted-Cross-Domain-Policies: none
+
+  # HTTPS obligatorio durante 1 año, también en subdominios.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # Permisos del dispositivo: la app no usa cámara ni micrófono del
+  # navegador (las fotos de fórmula se suben con el selector de archivos).
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=(), accelerometer=(), gyroscope=(), magnetometer=()
+
+  # ── Content Security Policy ───────────────────────────────────
+  # * script-src  → solo este sitio + los 3 CDN que usa la app.
+  #     Si mañana CDN o jsDelivr se comprometen, el navegador se niega
+  #     a ejecutar el archivo: es la principal defensa contra
+  #     "supply chain".  'unsafe-inline'/'unsafe-eval' se mantienen
+  #     porque la app usa eventos inline (onclick=...) y sin ellos
+  #     dejaría de funcionar; se pueden quitar tras migrarlos a
+  #     addEventListener.
+  # * connect-src → los datos SOLO viajan a Supabase. Un script
+  #     malicioso no podría volcar la base a otro servidor.
+  # * object-src/base-uri/frame-ancestors → sin plugins, sin reescritura
+  #     de rutas relativas y sin embeber el panel en otro sitio.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

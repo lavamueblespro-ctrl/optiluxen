@@ -9,7 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" crossorigin="anonymous"></script>
+  <!-- Version fijada a mano: una etiqueta flotante (@2) dejaria que un paquete
+       comprometido se cargara solo en todos los navegadores. -->
 <script src="./config.js"></script>
 <style>
 :root{
@@ -1049,7 +1051,7 @@ function renderRenewalAlerts(){
   box.innerHTML = due.map(({c,renewDate,dleft})=>{
     const msg = fillTemplate(state.reminders.renewalMsg || DEFAULT_RENEWAL, c);
     let links='';
-    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" rel="noopener noreferrer" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
     if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Es hora de renovar tus gafas',msg))}" onclick="logSend(this)">Correo</a>`;
     const label = dleft>=0 ? `en ${dleft} días` : `hace ${-dleft} días`;
     return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Cumple el año el ${fmtDate(renewDate)} · ${label}</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo.</span>'}</div></div>`;
@@ -1133,7 +1135,7 @@ function renderFormItems(){
         <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="formItems[${i}].desc=this.value">
         <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="formItems[${i}].lente=this.value">
         <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="formItems[${i}].trat=this.value">
-        <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="formItems[${i}].precio=+this.value||0; calcFormTotal()">
+        <input type="number" placeholder="Precio" value="${attr(r.precio||'')}" oninput="formItems[${i}].precio=+this.value||0; calcFormTotal()">
       </div>
     </div>`).join('');
   calcFormTotal();
@@ -1202,7 +1204,7 @@ async function saveClient(){
     const welcomeMsg = `Hola ${(c.nombre||'').split(' ')[0]}, gracias por registrarte en nuestra óptica. Guardaremos aquí tu historial y te avisaremos antes de tu próxima revisión.`;
     let links='';
     if(c.tel || c.correo) links += '<span class="note" style="width:100%;font-size:11.5px;">Saludo de bienvenida</span>';
-    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,welcomeMsg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" rel="noopener noreferrer" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,welcomeMsg))}" onclick="logSend(this)">WhatsApp</a>`;
     if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'¡Bienvenido a la óptica!',welcomeMsg))}" onclick="logSend(this)">Correo</a>`;
     if(newSale){
       const i = c.sales.length-1;
@@ -1430,7 +1432,14 @@ function exportCSV(){
     const gastado = c.sales.reduce((a,s)=>a+(+s.total||0),0);
     rows.push([c.nombre, c.tel, c.correo, c.fecha||'', c.etapa, lastSaleDate(c)||'', gastado]);
   });
-  const csv = rows.map(r=>r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  /* Blindaje contra "CSV injection": si un nombre empieza con = + - @ o tab,
+     Excel/Sheets lo ejecutaría como fórmula al abrir el archivo. */
+  const seguro = v => {
+    let s = String(v==null?'':v);
+    if(/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return s;
+  };
+  const csv = rows.map(r=>r.map(v=>`"${seguro(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   downloadBlob('clientes-optiluxen.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
 }
 
@@ -1556,7 +1565,7 @@ function renderSaleRows(){
         <input placeholder="Ej: Acetato Ray-Ban" value="${attr(r.desc||'')}" oninput="saleRows[${i}].desc=this.value">
         <input placeholder="Ej: Monofocal" value="${attr(r.lente||'')}" oninput="saleRows[${i}].lente=this.value">
         <input placeholder="Ej: Antirreflejo" value="${attr(r.trat||'')}" oninput="saleRows[${i}].trat=this.value">
-        <input type="number" placeholder="Precio" value="${r.precio||''}" oninput="saleRows[${i}].precio=+this.value||0; calcTotal()">
+        <input type="number" placeholder="Precio" value="${attr(r.precio||'')}" oninput="saleRows[${i}].precio=+this.value||0; calcTotal()">
       </div>
     </div>`).join('');
   calcTotal();
@@ -1816,7 +1825,7 @@ async function shareInvoiceWhatsApp(clientId, idx){
 
   // chat directo con el número que ya está en la ficha del cliente
   const url = waLink(c.tel, msg);
-  const w = window.open(url, '_blank');
+  const w = window.open(url, '_blank', 'noopener');
   if(!w) location.href = url;
   toast('Chat de ' + (c.nombre||'el cliente') + ' abierto. Adjunta el PDF: ➜ 📎 ➜ Documento ➜ '
         + invoiceNo(s) + '.pdf   ·   toca aquí para cerrar', 0);
@@ -1842,7 +1851,7 @@ function renderReminders(){
   document.getElementById('rem-due').innerHTML = due.map(c=>{
     const msg = fillTemplate(state.reminders.msg || DEFAULT_MSG, c);
     let links='';
-    if(state.reminders.wa && c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(state.reminders.wa && c.tel) links+=`<a class="linkbtn wa" target="_blank" rel="noopener noreferrer" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
     if(state.reminders.email && c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — Optiluxen',msg))}" onclick="logSend(this)">Correo</a>`;
     if(state.reminders.sms && c.tel) links+=`<a class="linkbtn sms" data-canal="SMS" data-nombre="${attr(c.nombre)}" href="${attr(smsLink(c.tel,msg))}" onclick="logSend(this)">SMS</a>`;
     return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Revisión: ${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo, o el canal está desactivado.</span>'}</div></div>`;

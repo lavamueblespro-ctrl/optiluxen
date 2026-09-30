@@ -27,14 +27,34 @@ const MIME = {
   '.md':   'text/plain; charset=utf-8'
 };
 
+// Cabeceras de seguridad (equivalente a _headers de Netlify)
+const SEC_HEADERS = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'X-Permitted-Cross-Domain-Policies': 'none',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+    + "https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; "
+    + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    + "font-src 'self' data: https://fonts.gstatic.com; "
+    + "img-src 'self' data: blob: https://*.supabase.co; "
+    + "media-src 'self' blob: data:; "
+    + "connect-src 'self' https://*.supabase.co wss://*.supabase.co; "
+    + "frame-src 'self' blob:; worker-src 'self' blob:; "
+    + "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+};
+
 const server = http.createServer((req, res) => {
   try {
     let urlPath = decodeURIComponent(req.url.split('?')[0]);
     if (urlPath === '/') urlPath = '/index.html';
 
     // evitar salirse de la carpeta
+    // (se compara con el separador final: "/app" no debe permitir "/app-otra")
     const filePath = path.join(ROOT, path.normalize(urlPath));
-    if (!filePath.startsWith(ROOT)) {
+    const rootSep = ROOT.endsWith(path.sep) ? ROOT : ROOT + path.sep;
+    if (!filePath.startsWith(rootSep)) {
       res.writeHead(403); return res.end('403');
     }
 
@@ -44,10 +64,12 @@ const server = http.createServer((req, res) => {
     }
 
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    // mismas cabeceras de seguridad que en Netlify (ver _headers)
+    res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext] || 'application/octet-stream' }, SEC_HEADERS));
     fs.createReadStream(filePath).pipe(res);
   } catch (e) {
-    res.writeHead(500); res.end('500 - ' + e.message);
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('400 - peticion invalida');
   }
 });
 
