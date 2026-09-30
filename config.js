@@ -1,8 +1,8 @@
 ﻿/* ============================================================
-   OptiPanel - Configuracion
+   Optiluxen - Configuracion
    Credenciales de tu proyecto de Supabase.
    ============================================================ */
-window.OPTIPANEL_CONFIG = {
+window.OPTILUXEN_CONFIG = {
   // Project URL:  https://kvfwnojveythxwhztugw.supabase.co
   SUPABASE_URL: "https://kvfwnojveythxwhztugw.supabase.co",
 

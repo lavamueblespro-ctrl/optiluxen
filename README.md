@@ -1,4 +1,4 @@
-# OptiPanel — CRM para ópticas
+# Optiluxen — CRM para ópticas
 
 CRM completo para ópticas: clientes, historial de fórmulas, facturación con PDF,
 recordatorios multicanal y control de suscripción.
@@ -24,7 +24,7 @@ del prototipo), con autenticación real y aislamiento de datos por usuario.
 Abre `config.js` y reemplaza el valor:
 
 ```js
-window.OPTIPANEL_CONFIG = {
+window.OPTILUXEN_CONFIG = {
   SUPABASE_URL: "https://kvfwnojveythxwhztugw.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  // ← aquí
 };

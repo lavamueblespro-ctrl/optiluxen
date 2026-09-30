@@ -1,5 +1,5 @@
 /* ============================================================
-   OptiPanel — Esquema de base de datos (Supabase)
+   Optiluxen — Esquema de base de datos (Supabase)
    Ejecútalo en: Dashboard → SQL Editor → New query → Run
    ============================================================ */
 

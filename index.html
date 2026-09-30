@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OptiPanel — CRM para ópticas</title>
+<title>Optiluxen — CRM para ópticas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -57,6 +57,17 @@ input,select,textarea{font-family:inherit;font-size:14px;}
 :root[data-theme="dark"] .auth-msg{background:#3a1220;}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .auth-msg{background:#3a1220;} }
 .auth-msg.ok{background:var(--teal-l);color:#0a7ea4;}
+
+/* pestañas Iniciar sesión / Crear cuenta */
+.auth-tabs{display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:5px;margin-bottom:22px;}
+.auth-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:none;border-radius:9px;background:transparent;color:var(--ink-soft);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;font-family:inherit;}
+.auth-tab:hover{color:var(--ink);background:rgba(127,144,166,.12);}
+.auth-tab.active{background:var(--teal);color:#0a0716;box-shadow:0 4px 14px rgba(0,217,255,.32);}
+.auth-tab svg{flex-shrink:0;}
+.auth-benefits{list-style:none;margin:-8px 0 18px;padding:0;display:grid;gap:8px;}
+.auth-benefits li{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink-soft);line-height:1.4;}
+.auth-benefits li::before{content:"✓";color:var(--teal);font-weight:800;flex-shrink:0;}
+.auth-switch a{text-decoration:none;border-bottom:1px solid currentColor;}
 
 /* ---------- SHELL ---------- */
 #app{display:none;min-height:100vh;min-height:100dvh;}
@@ -166,6 +177,26 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .due-card span{font-size:12px;color:var(--ink-soft);}
 .busy{position:fixed;inset:0;background:rgba(10,14,20,.35);display:none;align-items:center;justify-content:center;z-index:99;}
 .busy div{background:var(--card);color:var(--ink);padding:14px 22px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+
+/* ---------- IDENTIDAD DEL NEGOCIO ---------- */
+.shop-badge{display:flex;align-items:center;gap:9px;margin-bottom:10px;background:rgba(255,255,255,.07);border-radius:10px;padding:8px 9px;border:1px solid rgba(255,255,255,.08);}
+.shop-badge img{width:32px;height:32px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.12);flex-shrink:0;}
+.shop-badge .ph{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;color:var(--teal);flex-shrink:0;font-size:15px;}
+.shop-badge .nm{font-size:12.5px;color:#e6ebf5;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;}
+.shop-badge .nm small{display:block;font-weight:400;color:#8f9ab0;font-size:10.5px;}
+.logo-drop{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.logo-preview{width:78px;height:78px;border-radius:12px;border:1px dashed var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.logo-preview img{width:100%;height:100%;object-fit:contain;padding:4px;}
+.logo-preview .ph{font-family:'Fraunces',serif;font-size:26px;color:var(--ink-soft);}
+.logo-meta{flex:1;min-width:180px;}
+
+/* ---------- VISTA PREVIA DE PDF ---------- */
+.pdf-frame-wrap{width:100%;height:min(60vh,540px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#525659;}
+.pdf-frame-wrap iframe{width:100%;height:100%;border:0;display:block;}
+.pdf-hint{display:flex;gap:7px;align-items:flex-start;margin-top:10px;}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;z-index:120;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.linkbtn.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
 @media(max-width:760px){
   .shell{flex-direction:column;}
   .sidebar{width:100%;flex-direction:row;overflow-x:auto;align-items:center;padding:12px;gap:4px;}
@@ -180,15 +211,33 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 <!-- LOGIN -->
 <div id="login">
   <div class="login-card">
-    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">OptiPanel</div></div>
+    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
+
+    <!-- PESTAÑAS: INICIAR SESIÓN / CREAR CUENTA -->
+    <div class="auth-tabs" role="tablist" aria-label="Acceso a Optiluxen">
+      <button class="auth-tab active" id="tab-login" type="button" role="tab" aria-selected="true" onclick="setAuthMode('login',true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+        Iniciar sesión
+      </button>
+      <button class="auth-tab" id="tab-signup" type="button" role="tab" aria-selected="false" onclick="setAuthMode('signup',true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        Crear cuenta
+      </button>
+    </div>
+
     <h1 id="auth-title">Bienvenido de nuevo</h1>
     <p class="login-sub" id="auth-sub">Gestiona tu óptica: clientes, fórmulas y recordatorios en un solo lugar.</p>
+    <ul class="auth-benefits" id="auth-benefits" style="display:none;">
+      <li>Clientes, fórmulas e historial con foto en un solo lugar</li>
+      <li>Recordatorios automáticos por WhatsApp, correo y SMS</li>
+      <li>Facturas en PDF y respaldo de tus datos</li>
+    </ul>
     <div class="auth-msg" id="auth-msg"></div>
-    <div class="field" id="auth-name-row" style="display:none;"><label>Nombre / óptica</label><input id="li-name" type="text" placeholder="Óptica Alejo"></div>
-    <div class="field"><label>Correo electrónico</label><input id="li-email" type="email" placeholder="tu@optica.com" autocomplete="email"></div>
+    <div class="field" id="auth-name-row" style="display:none;"><label>Nombre de tu óptica</label><input id="li-name" type="text" placeholder="Óptica Alejo" autocomplete="organization" onkeydown="if(event.key==='Enter')doAuth()"></div>
+    <div class="field"><label>Correo electrónico</label><input id="li-email" type="email" placeholder="tu@optica.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAuth()"></div>
     <div class="field"><label>Contraseña</label><input id="li-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()"></div>
-    <button class="btn btn-primary" id="auth-btn" onclick="doAuth()">Ingresar</button>
-    <div class="divider">o</div>
+    <button class="btn btn-primary" id="auth-btn" onclick="doAuth()">Ingresar a mi panel</button>
+    <div class="divider">o continúa con</div>
     <button class="btn btn-google" onclick="doGoogle()">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 35 26.9 36 24 36c-5.4 0-9.9-3.4-11.5-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.9 3-2.9 5.4-5.6 6.9l6.3 5.3C39.9 37 44 31 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
       Continuar con Google
@@ -202,16 +251,21 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 <div id="app">
 <div class="shell">
   <div class="sidebar">
-    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">OptiPanel</div></div>
+    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
     <div class="theme-toggle"><span>Modo noche</span><div class="switch" id="sw-theme" onclick="toggleTheme()"></div></div>
     <div class="nav-item active" data-v="panel" onclick="setView('panel')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel</div>
     <div class="nav-item" data-v="clientes" onclick="setView('clientes')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.5 20c.3-2.6 2-4.6 4.5-5"/></svg>Clientes</div>
     <div class="nav-item" data-v="recordatorios" onclick="setView('recordatorios')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Recordatorios</div>
+    <div class="nav-item" data-v="negocio" onclick="setView('negocio')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v11H3z"/><path d="M9 20v-6h6v6"/></svg>Mi óptica</div>
     <div class="nav-item" data-v="suscripcion" onclick="setView('suscripcion')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Suscripción</div>
     <div class="side-foot">
+      <div class="shop-badge" id="shop-badge" title="Tu óptica">
+        <img id="shop-logo" style="display:none" alt="Logo">
+        <div class="ph" id="shop-logo-ph">O</div>
+        <span class="nm"><span id="shop-name">Mi óptica</span><small>plan Pro</small></span>
+      </div>
       <b id="foot-email">—</b>
-      <div id="foot-plan">plan Pro</div>
-      <button class="logout" style="margin-top:10px;" onclick="doLogout()">Cerrar sesión</button>
+      <button class="logout" onclick="doLogout()">Cerrar sesión</button>
     </div>
   </div>
 
@@ -272,7 +326,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
             <option value="0">El mismo día de la revisión</option>
           </select>
         </div>
-        <div class="field"><label>Mensaje</label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, en OptiPanel notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
+        <div class="field"><label>Mensaje</label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, en Optiluxen notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
         <div class="field"><label>Mensaje de renovación (1 año desde la compra)</label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
         <button class="btn-sm solid" onclick="saveReminders()">Guardar configuración</button>
         <span id="rem-saved" class="note" style="display:none;margin-left:8px;">Guardado ✓</span>
@@ -285,6 +339,44 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       <div class="card">
         <h3>Historial de envíos realizados</h3>
         <div class="row-list" id="rem-log"></div>
+      </div>
+    </div>
+
+    <!-- MI OPTICA -->
+    <div id="v-negocio" class="view" style="display:none">
+      <div class="topbar"><h2>Mi óptica</h2></div>
+      <div class="card">
+        <h3>Nombre del negocio</h3>
+        <p class="note">Aparece en la barra lateral y en el encabezado de cada factura.</p>
+        <div class="field" style="margin-top:10px;">
+          <input id="shop-name-input" placeholder="Óptica Alejo" maxlength="70">
+        </div>
+        <button class="btn-sm solid" onclick="saveShopName()">Guardar nombre</button>
+        <span id="shop-name-saved" class="note" style="display:none;margin-left:8px;">Guardado ✓</span>
+      </div>
+      <div class="card">
+        <h3>Logo del negocio</h3>
+        <p class="note">Se muestra en la app y se imprime en el PDF de cada factura. Se procesa en tu navegador (se redimensiona a 640 px) y se guarda en el bucket privado <code>branding</code>.</p>
+        <div class="logo-drop" style="margin-top:12px;">
+          <div class="logo-preview" id="logo-preview">
+            <span class="ph" id="logo-ph">O</span>
+            <img id="logo-img" style="display:none" alt="Logo de la óptica">
+          </div>
+          <div class="logo-meta">
+            <div class="actions">
+              <label class="btn-sm solid" style="cursor:pointer;">
+                Subir logo
+                <input type="file" accept="image/*" id="logo-file" style="display:none" onchange="uploadLogo(this)">
+              </label>
+              <button class="btn-sm" id="logo-remove" style="border-color:var(--danger);color:var(--danger);" onclick="removeLogo()">Quitar logo</button>
+            </div>
+            <div class="note" id="logo-note">Sin logo. Formatos: PNG, JPG, WebP o SVG (máx. 4 MB).</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Cómo se ve en la factura</h3>
+        <p class="note">Abre cualquier factura desde Clientes → ficha del cliente → Facturación. El PDF se genera <b>íntegramente en tu navegador</b> con jsPDF: no consume cuota ni recursos de Supabase, y queda listo para ver, descargar o compartir por WhatsApp.</p>
       </div>
     </div>
 
@@ -424,13 +516,33 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
   </div>
 </div>
 
+<!-- PDF PREVIEW MODAL -->
+<div class="modal-bg" id="modal-pdf">
+  <div class="modal" style="max-width:780px;">
+    <button class="close" onclick="closePdfPreview()">✕</button>
+    <h3 id="pdf-title">Factura</h3>
+    <p class="note" id="pdf-sub" style="margin-top:-8px;margin-bottom:12px;"></p>
+    <div class="pdf-frame-wrap"><iframe id="pdf-frame" title="Vista previa de la factura"></iframe></div>
+    <p class="note pdf-hint">🧾 El PDF se genera en <b>tu navegador</b> con jsPDF — no consume cuota ni recursos de Supabase.</p>
+    <div class="actions" style="margin-top:12px;">
+      <button class="btn-sm solid" onclick="pdfDownload()">⬇️ Descargar PDF</button>
+      <button class="btn-sm wa" onclick="pdfShareWhatsApp()">💬 Compartir por WhatsApp</button>
+      <button class="btn-sm mail" onclick="pdfShareNative()">↗️ Compartir…</button>
+      <button class="btn-sm" onclick="closePdfPreview()">Cerrar</button>
+    </div>
+    <p class="note" id="pdf-share-note" style="display:none;"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <div class="busy" id="busy"><div id="busy-txt">Guardando…</div></div>
 
 <script>
 /* ============================================================
-   OptiPanel — lógica de aplicación sobre Supabase
+   Optiluxen — lógica de aplicación sobre Supabase
    ============================================================ */
-const CFG = window.OPTIPANEL_CONFIG || {};
+const CFG = window.OPTILUXEN_CONFIG || {};
 if(!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || CFG.SUPABASE_ANON_KEY.indexOf('PEGA_AQUI') === 0){
   document.addEventListener('DOMContentLoaded', ()=>{
     const m = document.getElementById('auth-msg');
@@ -446,6 +558,7 @@ let state = {
   clients: [],
   reminders:{wa:true, email:true, sms:false, days:15, msg:'', renewalMsg:''},
   sub:{status:'active', next:''},
+  shop:{name:'', logoPath:'', logoUrl:''},
   remLog:[]
 };
 let currentClientId = null;
@@ -454,7 +567,7 @@ let clientView = 'tabla';
 let authMode = 'login';
 let currentView = 'panel';
 
-const DEFAULT_MSG = 'Hola {{nombre}}, en OptiPanel notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
+const DEFAULT_MSG = 'Hola {{nombre}}, en Optiluxen notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
 const DEFAULT_RENEWAL = 'Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?';
 
 /* ---------- utilidades ---------- */
@@ -490,20 +603,28 @@ function showAuthMsg(text, ok){
   m.className = 'auth-msg' + (ok?' ok':'');
   m.textContent = text;
 }
-function setAuthMode(mode){
+function setAuthMode(mode, focus){
   authMode = mode;
   const isSignup = mode==='signup';
+  const tl = document.getElementById('tab-login'), ts = document.getElementById('tab-signup');
+  if(tl){ tl.classList.toggle('active', !isSignup); tl.setAttribute('aria-selected', String(!isSignup)); }
+  if(ts){ ts.classList.toggle('active',  isSignup); ts.setAttribute('aria-selected', String( isSignup)); }
   document.getElementById('auth-title').textContent = isSignup? 'Crea tu cuenta' : 'Bienvenido de nuevo';
   document.getElementById('auth-sub').textContent = isSignup
-    ? 'Regístrate para empezar a gestionar clientes, fórmulas y recordatorios.'
+    ? 'Registra tu óptica en menos de un minuto y empieza a gestionar todo hoy mismo.'
     : 'Gestiona tu óptica: clientes, fórmulas y recordatorios en un solo lugar.';
+  document.getElementById('auth-benefits').style.display = isSignup? 'grid':'none';
   document.getElementById('auth-name-row').style.display = isSignup? 'block':'none';
-  document.getElementById('auth-btn').textContent = isSignup? 'Crear cuenta' : 'Ingresar';
+  document.getElementById('auth-btn').textContent = isSignup? 'Crear mi cuenta' : 'Ingresar a mi panel';
   document.getElementById('auth-switch').innerHTML = isSignup
-    ? '¿Ya tienes cuenta? <a onclick="setAuthMode(\'login\')">Ingresa aquí</a>'
-    : '¿Aún no tienes cuenta? <a onclick="setAuthMode(\'signup\')">Créala aquí</a>';
+    ? '¿Ya tienes cuenta? <a onclick="setAuthMode(\'login\',true)">Inicia sesión</a>'
+    : '¿Aún no tienes cuenta? <a onclick="setAuthMode(\'signup\',true)">Crea tu cuenta gratis</a>';
   document.getElementById('li-pass').autocomplete = isSignup? 'new-password':'current-password';
   showAuthMsg('');
+  if(focus){
+    const f = document.getElementById(isSignup? 'li-name':'li-email');
+    if(f) f.focus();
+  }
 }
 
 async function doAuth(){
@@ -520,13 +641,18 @@ async function doAuth(){
   try{
     if(authMode==='signup'){
       const name = document.getElementById('li-name').value.trim();
+      if(!name){ showAuthMsg('Escribe el nombre de tu óptica.'); return; }
       const {data, error} = await sb.auth.signUp({
         email, password: pass,
         options: { data: { full_name: name }, emailRedirectTo: window.location.origin }
       });
       if(error) throw error;
       if(data.session){ session = data.session; await enterApp(); }
-      else showAuthMsg('Cuenta creada. Revisa tu correo para confirmar el enlace y luego inicia sesión.', true);
+      else{
+        setAuthMode('login');
+        document.getElementById('li-pass').value = '';
+        showAuthMsg('✅ Cuenta creada. Revisa tu correo y confirma el enlace para entrar.', true);
+      }
     } else {
       const {data, error} = await sb.auth.signInWithPassword({email, password: pass});
       if(error) throw error;
@@ -537,7 +663,7 @@ async function doAuth(){
     showAuthMsg(authErr(err));
   }finally{
     btn.disabled = false;
-    btn.textContent = authMode==='signup'? 'Crear cuenta':'Ingresar';
+    btn.textContent = authMode==='signup'? 'Crear mi cuenta':'Ingresar a mi panel';
   }
 }
 
@@ -620,11 +746,16 @@ async function loadAll(){
     if(prof){
       state.sub.status = prof.plan_status||'active';
       state.sub.next = prof.plan_next_charge||'';
+      state.shop.name = prof.full_name || (session.user.user_metadata||{}).full_name || '';
+      state.shop.logoPath = prof.logo_path || '';
     } else {
       const n=new Date(); n.setDate(n.getDate()+30);
       state.sub.next = n.toISOString().slice(0,10);
+      state.shop.name = (session.user.user_metadata||{}).full_name || '';
+      state.shop.logoPath = '';
     }
     await signImages();
+    await signLogo();
   }catch(err){
     console.error(err);
     alert('No se pudieron cargar los datos: '+authErr(err));
@@ -642,6 +773,123 @@ async function signImages(){
   const map = {};
   paths.forEach((p,i)=>{ if(data[i] && data[i].signedUrl) map[p]=data[i].signedUrl; });
   state.clients.forEach(c=>c.rx.forEach(r=>{ if(r.imgPath) r.img = map[r.imgPath]||null; }));
+}
+
+/* ---------- identidad del negocio ---------- */
+async function signLogo(){
+  state.shop.logoUrl = '';
+  if(!state.shop.logoPath) return;
+  const {data, error} = await sb.storage.from('branding').createSignedUrl(state.shop.logoPath, 60*60*24*30);
+  if(error){ console.warn('logo:', error); return; }
+  if(data && data.signedUrl) state.shop.logoUrl = data.signedUrl;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('on'), 3600);
+}
+
+function renderShop(){
+  const name = state.shop.name || 'Mi óptica';
+  const has = !!state.shop.logoUrl;
+
+  const el = document.getElementById('shop-name'); if(el) el.textContent = name;
+  const inp = document.getElementById('shop-name-input');
+  if(inp && document.activeElement !== inp) inp.value = state.shop.name || '';
+
+  const setPair = (imgId, phId, phText) => {
+    const img = document.getElementById(imgId), ph = document.getElementById(phId);
+    if(img){ img.style.display = has?'block':'none'; if(has) img.src = state.shop.logoUrl; }
+    if(ph){ ph.style.display = has?'none':'flex'; ph.textContent = phText; }
+  };
+  setPair('shop-logo','shop-logo-ph', (name||'O').trim().charAt(0).toUpperCase() || 'O');
+  setPair('logo-img','logo-ph','O');
+
+  const rm = document.getElementById('logo-remove');
+  if(rm) rm.style.display = has ? 'inline-block' : 'none';
+  const note = document.getElementById('logo-note');
+  if(note) note.innerHTML = has
+    ? '✅ Logo activo: se muestra en la app y en el encabezado de cada factura.'
+    : 'Sin logo. Formatos: PNG, JPG, WebP o SVG (máx. 4 MB).';
+}
+
+async function saveShopName(){
+  const v = document.getElementById('shop-name-input').value.trim();
+  if(!v){ alert('El nombre no puede quedar vacío.'); return; }
+  busy(true,'Guardando…');
+  try{
+    const {error} = await sb.from('profiles').upsert({id: session.user.id, full_name: v}, {onConflict:'id'});
+    if(error) throw error;
+    state.shop.name = v;
+    renderShop();
+    const s = document.getElementById('shop-name-saved');
+    s.style.display='inline'; setTimeout(()=>s.style.display='none',1800);
+  }catch(e){ alert('No se pudo guardar: '+authErr(e)); }
+  finally{ busy(false); }
+}
+
+/* redimensiona y convierte a PNG en el navegador (nada viaja sin procesar) */
+function processImage(file, maxW, maxH){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('No se pudo leer la imagen.')); };
+    img.onload = ()=>{
+      let w = img.naturalWidth || 640, h = img.naturalHeight || 640;
+      const scale = Math.min(1, maxW/w, maxH/h);
+      const cw = Math.max(1, Math.round(w*scale)), ch = Math.max(1, Math.round(h*scale));
+      const cv = document.createElement('canvas');
+      cv.width = cw; cv.height = ch;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, cw, ch);
+      URL.revokeObjectURL(url);
+      if(!cv.toBlob){ reject(new Error('Navegador no compatible.')); return; }
+      cv.toBlob(b=> b ? resolve({blob:b, mime:'image/png', w:cw, h:ch})
+                      : reject(new Error('No se pudo convertir la imagen.')), 'image/png');
+    };
+    img.src = url;
+  });
+}
+
+async function uploadLogo(input){
+  const file = input.files && input.files[0];
+  input.value = '';
+  if(!file) return;
+  if(file.size > 4*1024*1024){ alert('El archivo supera los 4 MB.'); return; }
+  busy(true,'Procesando logo…');
+  try{
+    const p = await processImage(file, 640, 640);
+    const path = `${session.user.id}/logo.png`;
+    const {error: upErr} = await sb.storage.from('branding')
+      .upload(path, p.blob, {upsert:true, contentType:'image/png'});
+    if(upErr) throw upErr;
+    const {error: dbErr} = await sb.from('profiles')
+      .upsert({id: session.user.id, logo_path: path}, {onConflict:'id'});
+    if(dbErr) throw dbErr;
+    state.shop.logoPath = path;
+    await signLogo();
+    renderShop();
+    toast(`Logo subido (${p.w}×${p.h}) ✓`);
+  }catch(e){ alert('No se pudo subir el logo: '+authErr(e)); }
+  finally{ busy(false); }
+}
+
+async function removeLogo(){
+  if(!state.shop.logoPath) return;
+  if(!confirm('¿Quitar el logo de tu óptica?')) return;
+  busy(true,'Quitando…');
+  try{
+    const {error: del} = await sb.storage.from('branding').remove([state.shop.logoPath]);
+    if(del) console.warn(del);
+    const {error} = await sb.from('profiles').update({logo_path:null}).eq('id', session.user.id);
+    if(error) throw error;
+    state.shop.logoPath = ''; state.shop.logoUrl = '';
+    renderShop(); toast('Logo eliminado');
+  }catch(e){ alert('No se pudo quitar: '+authErr(e)); }
+  finally{ busy(false); }
 }
 
 /* ---------- persistencia ---------- */
@@ -664,7 +912,7 @@ async function nextInvoiceNo(){
 
 /* ---------- tema ---------- */
 function initTheme(){
-  const saved = localStorage.getItem('optipanel_theme');
+  const saved = localStorage.getItem('optiluxen_theme');
   if(saved) document.documentElement.setAttribute('data-theme', saved);
   const isDark = saved==='dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.getElementById('sw-theme').classList.toggle('on', isDark);
@@ -673,7 +921,7 @@ function toggleTheme(){
   const isDark = document.getElementById('sw-theme').classList.toggle('on');
   const theme = isDark ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('optipanel_theme', theme);
+  localStorage.setItem('optiluxen_theme', theme);
 }
 
 /* ---------- navegación ---------- */
@@ -685,11 +933,12 @@ function setView(v){
   if(v==='panel') renderPanel();
   if(v==='clientes') renderClientes();
   if(v==='recordatorios') renderReminders();
+  if(v==='negocio') renderShop();
   if(v==='suscripcion') renderSub();
 }
 
 function renderAll(){
-  renderLock(); renderPanel(); renderClientes(); renderReminders(); renderSub();
+  renderLock(); renderPanel(); renderClientes(); renderReminders(); renderSub(); renderShop();
 }
 
 function renderLock(){
@@ -915,11 +1164,11 @@ function exportCSV(){
     rows.push([c.nombre, c.tel, c.correo, c.fecha||'', c.etapa, lastSaleDate(c)||'', gastado]);
   });
   const csv = rows.map(r=>r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
-  downloadBlob('clientes-optipanel.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+  downloadBlob('clientes-optiluxen.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
 }
 
 function exportJSON(){
-  downloadBlob('backup-optipanel.json', JSON.stringify(state, null, 2), 'application/json');
+  downloadBlob('backup-optiluxen.json', JSON.stringify(state, null, 2), 'application/json');
 }
 
 async function seedDemo(){
@@ -1109,76 +1358,178 @@ function renderSaleHistory(c){
 
 function invoiceNo(s){ return 'FAC-' + String(s.invoiceNo||0).padStart(5,'0'); }
 
-function buildInvoicePDF(c, s){
+async function getLogoDataURL(){
+  if(!state.shop.logoUrl) return null;
+  try{
+    const r = await fetch(state.shop.logoUrl);
+    if(!r.ok) return null;
+    const b = await r.blob();
+    return await new Promise(res=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(fr.result);
+      fr.onerror = ()=>res(null);
+      fr.readAsDataURL(b);
+    });
+  }catch(e){ console.warn('logo pdf:', e); return null; }
+}
+
+/* El PDF se arma ÍNTEGRO en el navegador con jsPDF.
+   No hay ninguna llamada a Supabase para generarlo. */
+async function buildInvoicePDF(c, s){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+  const shop = state.shop.name || '';
+  const logoData = await getLogoDataURL();
+
+  const L = 14, R = 196;
+  let y = 18;
+
+  if(logoData){
+    try{ doc.addImage(logoData, 'PNG', L, 11, 17, 17); }catch(e){ console.warn('addImage:', e); }
+  }
+  const tx = logoData ? L + 23 : L;
+
   doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text('Comprobante de venta', 14, 18);
+  doc.text('Comprobante de venta', tx, y);
+  y += 7;
+
+  if(shop){
+    doc.setFontSize(11);
+    doc.text(shop, tx, y);
+    y += 6;
+  }
+
   doc.setFontSize(10); doc.setFont('helvetica','normal');
-  doc.text(invoiceNo(s), 14, 25);
-  doc.text('Fecha: ' + fmtDate(s.date), 14, 31);
-  doc.text('Cliente: ' + c.nombre, 14, 40);
-  doc.text('Teléfono: ' + (c.tel||'—'), 14, 46);
-  doc.text('Correo: ' + (c.correo||'—'), 14, 52);
-  let y = 64;
+  doc.text(invoiceNo(s), tx, y); y += 6;
+  doc.text('Fecha: ' + fmtDate(s.date), tx, y); y += 9;
+
+  doc.text('Cliente: ' + c.nombre, L, y); y += 6;
+  doc.text('Teléfono: ' + (c.tel||'—'), L, y); y += 6;
+  doc.text('Correo: ' + (c.correo||'—'), L, y); y += 8;
+
   doc.setFont('helvetica','bold');
-  doc.text('Concepto', 14, y); doc.text('Tipo de lente', 84, y); doc.text('Tratamiento', 134, y); doc.text('Precio', 180, y);
-  doc.setFont('helvetica','normal'); y+=6;
-  doc.setLineWidth(0.2); doc.line(14, y-4, 196, y-4);
+  doc.text('Concepto', L, y); doc.text('Tipo de lente', 84, y); doc.text('Tratamiento', 134, y); doc.text('Precio', 180, y);
+  doc.setFont('helvetica','normal'); y += 6;
+  doc.setLineWidth(0.2); doc.line(L, y-4, R, y-4);
+
   s.items.forEach(it=>{
-    doc.text(String(it.desc||'—').slice(0,32), 14, y);
+    doc.text(String(it.desc||'—').slice(0,32), L, y);
     doc.text(String(it.lente||'—').slice(0,22), 84, y);
     doc.text(String(it.trat||'—').slice(0,22), 134, y);
     doc.text(money(it.precio||0), 180, y);
-    y+=7;
+    y += 7;
   });
-  y+=4; doc.line(14, y-4, 196, y-4);
+  y += 4; doc.line(L, y-4, R, y-4);
+
   const sub = s.items.reduce((a,i)=>a+(+i.precio||0),0);
-  doc.text('Subtotal: ' + money(sub), 140, y); y+=6;
-  doc.text('Descuento: ' + (s.discount||0) + '%', 140, y); y+=6;
+  doc.text('Subtotal: ' + money(sub), 140, y); y += 6;
+  doc.text('Descuento: ' + (s.discount||0) + '%', 140, y); y += 6;
   doc.setFont('helvetica','bold');
   doc.text('Total: ' + money(s.total), 140, y);
+
   doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(140);
-  doc.text('Comprobante interno de venta, no constituye factura electrónica válida ante la DIAN.', 14, 285);
+  doc.text('Comprobante interno de venta, no constituye factura electrónica válida ante la DIAN.', L, 285);
+  doc.text('Generado por Optiluxen · ' + (shop || ''), L, 290);
   return doc;
 }
 
-async function downloadInvoice(clientId, idx){
-  const c = state.clients.find(x=>x.id===clientId);
-  if(!c) return;
-  const s = c.sales[idx];
-  if(!s.invoiceNo){
-    const no = await nextInvoiceNo();
-    if(no){
-      s.invoiceNo = no;
-      await sb.from('sales').update({invoice_no:no}).eq('id', s.id);
-    }
-  }
-  const doc = buildInvoicePDF(c,s);
-  downloadBlob(invoiceNo(s)+'.pdf', doc.output('blob'));
+/* ---------- vista previa del PDF ---------- */
+let pdfCtx = null;
+
+function pdfNote(txt){
+  const n = document.getElementById('pdf-share-note');
+  if(!n) return;
+  if(!txt){ n.style.display='none'; n.textContent=''; return; }
+  n.style.display='block'; n.textContent = txt;
 }
 
-async function shareInvoiceWhatsApp(clientId, idx){
+async function showInvoicePreview(clientId, idx){
   const c = state.clients.find(x=>x.id===clientId);
   if(!c) return;
   const s = c.sales[idx];
-  if(!s.invoiceNo){
-    const no = await nextInvoiceNo();
-    if(no){ s.invoiceNo = no; await sb.from('sales').update({invoice_no:no}).eq('id', s.id); }
-  }
-  const doc = buildInvoicePDF(c,s);
-  const blob = doc.output('blob');
+  if(!s) return;
+
+  busy(true,'Generando PDF en tu navegador…');
   try{
-    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
+    if(!s.invoiceNo){
+      const no = await nextInvoiceNo();
+      if(no){
+        s.invoiceNo = no;
+        const {error} = await sb.from('sales').update({invoice_no:no}).eq('id', s.id);
+        if(error) console.warn(error);
+      }
+    }
+    const doc = await buildInvoicePDF(c, s);
+    const blob = doc.output('blob');
+
+    if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
+    const url = URL.createObjectURL(blob);
+    pdfCtx = {c, s, blob, url};
+
+    document.getElementById('pdf-title').textContent = invoiceNo(s) + '  ·  ' + money(s.total);
+    document.getElementById('pdf-sub').textContent =
+      c.nombre + '  ·  ' + fmtDate(s.date) + '  ·  ' +
+      (s.items.map(i=>i.desc).filter(Boolean).join(', ') || 'Ítems');
+    document.getElementById('pdf-frame').src = url;
+    pdfNote('');
+    document.getElementById('modal-pdf').style.display = 'flex';
+  }catch(e){
+    alert('No se pudo generar el PDF: '+authErr(e));
+  }finally{
+    busy(false);
+  }
+}
+
+function closePdfPreview(){
+  const m = document.getElementById('modal-pdf');
+  if(m) m.style.display = 'none';
+  const fr = document.getElementById('pdf-frame');
+  if(fr) fr.src = 'about:blank';
+  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
+  pdfCtx = null;
+}
+
+function pdfDownload(){
+  if(!pdfCtx) return;
+  downloadBlob(invoiceNo(pdfCtx.s)+'.pdf', pdfCtx.blob);
+  toast('PDF descargado ✓');
+}
+
+async function pdfShareNative(){
+  if(!pdfCtx) return;
+  try{
+    const file = new File([pdfCtx.blob], invoiceNo(pdfCtx.s)+'.pdf', {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:invoiceNo(pdfCtx.s), text:'Comprobante de venta — '+pdfCtx.c.nombre});
+      return;
+    }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  pdfDownload();
+  toast('Tu navegador no admite compartir archivos. El PDF se descargó.');
+}
+
+async function pdfShareWhatsApp(){
+  if(!pdfCtx) return;
+  const {c, s, blob} = pdfCtx;
+  const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
+  // móviles: enviamos el PDF de verdad
+  try{
     if(navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
       return;
     }
-  }catch(e){ /* cancelado o no soportado: seguimos con el texto */ }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  // escritorio / WhatsApp Web: mensaje listo + PDF descargado para adjuntar
   const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
-  const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}.`;
+  const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí va tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}. Te lo adjunto.`;
+  downloadBlob(invoiceNo(s)+'.pdf', blob);
   window.open(waLink(c.tel, msg), '_blank');
+  pdfNote('💬 WhatsApp se abrió con el mensaje escrito. El PDF se descargó en tu equipo: adjúntalo en el chat y pulsa enviar.');
 }
+
+/* compat: los botones antiguos abren la vista previa */
+async function downloadInvoice(clientId, idx){ await showInvoicePreview(clientId, idx); }
+async function shareInvoiceWhatsApp(clientId, idx){ await showInvoicePreview(clientId, idx); await pdfShareWhatsApp(); }
 
 /* ---------- recordatorios ---------- */
 function toggleSw(k){ state.reminders[k]=!state.reminders[k]; document.getElementById('sw-'+k).classList.toggle('on'); renderPanel(); }
@@ -1193,7 +1544,7 @@ function renderReminders(){
     const msg = fillTemplate(state.reminders.msg || DEFAULT_MSG, c);
     let links='';
     if(state.reminders.wa && c.tel) links+=`<a class="linkbtn wa" target="_blank" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
-    if(state.reminders.email && c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — OptiPanel',msg))}" onclick="logSend(this)">Correo</a>`;
+    if(state.reminders.email && c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — Optiluxen',msg))}" onclick="logSend(this)">Correo</a>`;
     if(state.reminders.sms && c.tel) links+=`<a class="linkbtn sms" data-canal="SMS" data-nombre="${attr(c.nombre)}" href="${attr(smsLink(c.tel,msg))}" onclick="logSend(this)">SMS</a>`;
     return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Revisión: ${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo, o el canal está desactivado.</span>'}</div></div>`;
   }).join('') || '<div class="note">Ningún cliente está dentro de la ventana de recordatorio en este momento.</div>';

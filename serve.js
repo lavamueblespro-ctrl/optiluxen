@@ -1,5 +1,5 @@
 /* ============================================================
-   OptiPanel - servidor local (sin dependencias)
+   Optiluxen - servidor local (sin dependencias)
    Uso:  node serve.js
    Luego abre:  http://localhost:3000
    ============================================================ */
@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log('');
-  console.log('  OptiPanel corriendo en  http://localhost:' + PORT);
+  console.log('  Optiluxen corriendo en  http://localhost:' + PORT);
   console.log('  (pulse Ctrl+C para detener)');
   console.log('');
 });
