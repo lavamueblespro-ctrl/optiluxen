@@ -190,7 +190,10 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .logo-preview .ph{font-family:'Fraunces',serif;font-size:26px;color:var(--ink-soft);}
 .logo-meta{flex:1;min-width:180px;}
 
-/* ---------- PDF (se abre en el visor del navegador) ---------- */
+/* ---------- VISTA PREVIA DE PDF ---------- */
+.pdf-frame-wrap{width:100%;height:min(60vh,540px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#525659;}
+.pdf-frame-wrap iframe{width:100%;height:100%;border:0;display:block;}
+.pdf-hint{display:flex;gap:7px;align-items:flex-start;margin-top:12px;}
 /* ---------- DESCUENTO: % o valor fijo ---------- */
 .disc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .disc-row input{flex:1 1 90px;min-width:0;width:auto;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);}
@@ -535,7 +538,23 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
   </div>
 </div>
 
-<!-- (visor embebido eliminado: el PDF se abre siempre en el navegador) -->
+<!-- PDF MODAL -->
+<div class="modal-bg" id="modal-pdf">
+  <div class="modal" style="max-width:780px;">
+    <button class="close" onclick="closePdfPreview()">✕</button>
+    <h3 id="pdf-title">Factura</h3>
+    <p class="note" id="pdf-sub" style="margin-top:-8px;margin-bottom:12px;"></p>
+    <div class="pdf-frame-wrap"><iframe id="pdf-frame" title="Vista previa de la factura"></iframe></div>
+    <p class="note pdf-hint">🧾 El PDF se genera en <b>tu navegador</b> con jsPDF — no consume cuota ni recursos de Supabase.</p>
+    <div class="actions" style="margin-top:14px;">
+      <button class="btn-sm" onclick="pdfDownload()">⬇️ Descargar PDF</button>
+      <button class="btn-sm solid" onclick="pdfShare()">↗️ Compartir</button>
+      <button class="btn-sm wa" onclick="pdfShareWhatsApp()">💬 Compartir por WhatsApp</button>
+      <button class="btn-sm" onclick="closePdfPreview()">Cerrar</button>
+    </div>
+    <p class="note" id="pdf-share-note" style="display:none;"></p>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1109,7 +1128,7 @@ async function saveClient(){
     if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'¡Bienvenido a la óptica!',welcomeMsg))}" onclick="logSend(this)">Correo</a>`;
     if(newSale){
       const i = c.sales.length-1;
-      links+=`<button class="linkbtn solid" onclick="viewInvoice('${c.id}', ${i})">👁️ Ver PDF</button>`;
+      links+=`<button class="linkbtn solid" onclick="openInvoice('${c.id}', ${i})">📄 Factura PDF</button>`;
       links+=`<button class="linkbtn" onclick="downloadInvoice('${c.id}', ${i})">⬇️ Descargar</button>`;
       links+=`<button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}', ${i})">💬 WhatsApp</button>`;
     }
@@ -1390,7 +1409,7 @@ function renderSaleHistory(c){
         <div style="display:flex;justify-content:space-between;width:100%;gap:10px;"><span>${fmtDate(s.date)} · ${esc(label)}</span><span>${money(s.total)}</span></div>
         ${dsc}
         <div class="linkrow">
-          <button class="linkbtn solid" onclick="viewInvoice('${c.id}',${idx})">👁️ Ver PDF</button>
+          <button class="linkbtn solid" onclick="openInvoice('${c.id}',${idx})">📄 Factura PDF</button>
           <button class="linkbtn" onclick="downloadInvoice('${c.id}',${idx})">⬇️ Descargar</button>
           <button class="linkbtn wa" onclick="shareInvoiceWhatsApp('${c.id}',${idx})">💬 WhatsApp</button>
         </div>
@@ -1475,19 +1494,16 @@ async function buildInvoicePDF(c, s){
   return doc;
 }
 
-/* ---------- PDF: se genera aquí y se abre en el navegador ---------- */
-let pdfCache = new Map();
+/* ---------- PDF: se genera en el navegador y se ofrece en una ventana ---------- */
+let pdfCtx = null;
 
-/* Genera el PDF una sola vez por venta y lo deja listo.
-   Todo ocurre en el navegador con jsPDF — sin tocar Supabase. */
-async function ensureInvoice(clientId, idx){
+/* Genera el PDF una sola vez por venta. Todo ocurre en el navegador con
+   jsPDF — aquí no se consume ni un recurso de Supabase. */
+async function makeInvoice(clientId, idx){
   const c = state.clients.find(x=>x.id===clientId);
   if(!c) return null;
   const s = c.sales[idx];
   if(!s) return null;
-
-  const key = s.id || (clientId+':'+idx);
-  if(pdfCache.has(key)) return pdfCache.get(key);
 
   if(!s.invoiceNo){
     const no = await nextInvoiceNo();
@@ -1499,66 +1515,106 @@ async function ensureInvoice(clientId, idx){
   }
   const doc = await buildInvoicePDF(c, s);
   const blob = doc.output('blob');
-  const url = URL.createObjectURL(blob);
-  const entry = {c, s, blob, url, key};
-  pdfCache.set(key, entry);
-  if(pdfCache.size > 10){
-    const first = pdfCache.keys().next().value;
-    const old = pdfCache.get(first);
-    try{ URL.revokeObjectURL(old.url); }catch(e){}
-    pdfCache.delete(first);
+  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
+  pdfCtx = {c, s, blob, url: URL.createObjectURL(blob)};
+  return pdfCtx;
+}
+
+function pdfNote(txt){
+  const n = document.getElementById('pdf-share-note');
+  if(!n) return;
+  if(!txt){ n.style.display='none'; n.textContent=''; return; }
+  n.style.display='block'; n.textContent = txt;
+}
+
+/* Abre la ventana con la factura ya generada */
+async function openInvoice(clientId, idx){
+  busy(true, 'Generando PDF en tu navegador…');
+  try{
+    const p = await makeInvoice(clientId, idx);
+    if(!p) return;
+    document.getElementById('pdf-title').textContent = invoiceNo(p.s) + '  ·  ' + money(p.s.total);
+    document.getElementById('pdf-sub').textContent =
+      p.c.nombre + '  ·  ' + fmtDate(p.s.date) + '  ·  ' +
+      (p.s.items.map(i=>i.desc).filter(Boolean).join(', ') || 'Ítems');
+    document.getElementById('pdf-frame').src = p.url;
+    pdfNote('');
+    document.getElementById('modal-pdf').style.display = 'flex';
+  }catch(e){
+    alert('No se pudo generar el PDF: '+authErr(e));
+  }finally{
+    busy(false);
   }
-  return entry;
 }
 
-/* 👁️ Ver PDF — se abre con el visor nativo del navegador (pestaña nueva) */
-async function viewInvoice(clientId, idx){
-  let p = null;
-  busy(true, 'Generando PDF en tu navegador…');
-  try{ p = await ensureInvoice(clientId, idx); }
-  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
-  finally{ busy(false); }
-  if(!p) return;
-  const w = window.open(p.url, '_blank');
-  if(!w) toast('El navegador bloqueó la pestaña nueva. Permite las ventanas emergentes para ver el PDF.');
+function closePdfPreview(){
+  const m = document.getElementById('modal-pdf');
+  if(m) m.style.display = 'none';
+  const fr = document.getElementById('pdf-frame');
+  if(fr) fr.src = 'about:blank';
+  if(pdfCtx && pdfCtx.url) URL.revokeObjectURL(pdfCtx.url);
+  pdfCtx = null;
 }
 
-async function downloadInvoice(clientId, idx){
-  let p = null;
-  busy(true, 'Generando PDF en tu navegador…');
-  try{ p = await ensureInvoice(clientId, idx); }
-  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
-  finally{ busy(false); }
-  if(!p) return;
-  downloadBlob(invoiceNo(p.s)+'.pdf', p.blob);
+function pdfDownload(){
+  if(!pdfCtx) return;
+  downloadBlob(invoiceNo(pdfCtx.s)+'.pdf', pdfCtx.blob);
   toast('PDF descargado ✓');
 }
 
-async function shareInvoiceWhatsApp(clientId, idx){
-  let p = null;
-  busy(true, 'Generando PDF en tu navegador…');
-  try{ p = await ensureInvoice(clientId, idx); }
-  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
-  finally{ busy(false); }
-  if(!p) return;
-
-  const {c, s, blob} = p;
-  const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
-  // móvil: enviamos el archivo PDF de verdad
+/* ↗️ Compartir — abre el menú nativo del celular: WhatsApp, correo, Telegram… */
+async function pdfShare(){
+  if(!pdfCtx) return;
+  const {c, s, blob} = pdfCtx;
   try{
+    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
       return;
     }
   }catch(e){ if(e && e.name==='AbortError') return; }
-  // escritorio / WhatsApp Web: mensaje listo + PDF descargado para adjuntar
+  downloadBlob(invoiceNo(s)+'.pdf', blob);
+  pdfNote('Este navegador no tiene menú de compartir. Descargamos el PDF para que lo compartas desde tu equipo.');
+}
+
+/* 💬 Compartir por WhatsApp */
+async function pdfShareWhatsApp(){
+  if(!pdfCtx) return;
+  const {c, s, blob} = pdfCtx;
+  // móvil: adjuntamos el PDF de verdad
+  try{
+    const file = new File([blob], invoiceNo(s)+'.pdf', {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:invoiceNo(s), text:'Comprobante de venta — '+c.nombre});
+      return;
+    }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  // escritorio: mensaje ya redactado + PDF descargado para adjuntar
   const resumen = s.items.map(i=>i.desc).filter(Boolean).join(', ');
   const msg = `Hola ${(c.nombre||'').split(' ')[0]}, aquí va tu comprobante ${invoiceNo(s)} por ${money(s.total)} (${resumen}). Fecha: ${fmtDate(s.date)}. Te lo adjunto.`;
   downloadBlob(invoiceNo(s)+'.pdf', blob);
   const w = window.open(waLink(c.tel, msg), '_blank');
-  toast(w
-    ? 'WhatsApp abierto con el mensaje. El PDF se descargó: adjúntalo y pulsa enviar.'
-    : 'WhatsApp fue bloqueado por el navegador. El PDF se descargó — compártelo manualmente.');
+  pdfNote(w
+    ? '💬 WhatsApp se abrió con el mensaje escrito. El PDF se descargó: adjúntalo en el chat y pulsa enviar.'
+    : '💬 WhatsApp fue bloqueado por el navegador. El PDF se descargó — compártelo manualmente.');
+}
+
+/* botones sueltos, fuera de la ventana */
+async function downloadInvoice(clientId, idx){
+  busy(true, 'Generando PDF en tu navegador…');
+  try{
+    if(await makeInvoice(clientId, idx)) pdfDownload();
+  }catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); }
+  finally{ busy(false); }
+}
+
+async function shareInvoiceWhatsApp(clientId, idx){
+  busy(true, 'Generando PDF en tu navegador…');
+  let ok = false;
+  try{ ok = !!(await makeInvoice(clientId, idx)); }
+  catch(e){ alert('No se pudo generar el PDF: '+authErr(e)); return; }
+  finally{ busy(false); }
+  if(ok) await pdfShareWhatsApp();
 }
 
 /* ---------- recordatorios ---------- */
