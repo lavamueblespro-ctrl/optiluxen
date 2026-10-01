@@ -34,6 +34,7 @@ const SEC_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'X-Permitted-Cross-Domain-Policies': 'none',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=(), accelerometer=(), gyroscope=(), magnetometer=()',
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' "
     + "https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; "
     + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "

@@ -87,6 +87,33 @@ input,select,textarea{font-family:inherit;font-size:14px;}
 .main{flex:1;min-width:0;padding:26px 30px calc(30px + env(safe-area-inset-bottom,0px));overflow-x:hidden;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
 .topbar h2{font-size:22px;}
+
+/* ---------- barra superior derecha: logo de la app + logo de la óptica (menú) ---------- */
+.main-head{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:0 0 14px;}
+.app-logo{display:flex;align-items:center;gap:9px;color:var(--ink);}
+.app-logo .brand-mark{width:30px;height:30px;border-radius:8px;font-size:16px;box-shadow:0 0 14px rgba(0,217,255,.4);}
+.app-logo .brand-name{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
+.umenu{position:relative;}
+.umenu-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px 5px 5px;color:var(--ink);max-width:60vw;}
+.umenu-btn:hover,.umenu-btn[aria-expanded="true"]{border-color:var(--teal);}
+.umenu-btn img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--teal-l);flex-shrink:0;}
+.umenu-btn .ph{width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg,var(--navy),var(--navy-2));color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:14px;flex-shrink:0;}
+.umenu-btn .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw;}
+.umenu-btn .caret{color:var(--ink-soft);flex-shrink:0;transition:transform .18s;}
+.umenu.open .caret{transform:rotate(180deg);}
+.umenu-list{position:absolute;right:0;top:calc(100% + 9px);min-width:236px;max-width:80vw;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(10,14,20,.24);padding:8px;display:none;z-index:40;}
+.umenu.open .umenu-list{display:block;}
+.umenu-list .who{padding:6px 9px 10px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+.umenu-list .who b{display:block;font-size:13.5px;word-break:break-word;}
+.umenu-list .who span{display:block;font-size:12px;color:var(--ink-soft);word-break:break-all;margin-top:2px;}
+.umenu-list .mi{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;border-radius:9px;padding:9px 10px;font-size:13.5px;font-weight:600;color:var(--danger);}
+.umenu-list .mi:hover{background:rgba(255,59,92,.1);}
+@media(max-width:760px){
+  .main-head{margin-bottom:16px;}
+  .app-logo .brand-name{display:none;}
+  .umenu-btn .nm{max-width:40vw;}
+}
+
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;border-radius:99px;font-weight:600;}
 .pill-ok{background:var(--teal-l);color:var(--teal);}
 .pill-warn{background:var(--amber-l);color:var(--amber);}
@@ -292,6 +319,27 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
   </div>
 
   <div class="main">
+
+    <!-- BARRA SUPERIOR DERECHA: logo de la app + logo de la óptica con menú de sesión -->
+    <div class="main-head">
+      <div class="app-logo" title="Optiluxen"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
+      <div class="umenu" id="umenu">
+        <button class="umenu-btn" id="umenu-btn" type="button" aria-haspopup="menu" aria-expanded="false" onclick="toggleUMenu(event)" title="Mi cuenta">
+          <img id="um-logo" style="display:none" alt="">
+          <div class="ph" id="um-logo-ph">O</div>
+          <span class="nm" id="um-name">Mi óptica</span>
+          <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="umenu-list" id="umenu-list" role="menu">
+          <div class="who"><b id="um-who">Mi óptica</b><span id="um-email">—</span></div>
+          <button class="mi" type="button" role="menuitem" onclick="doLogout()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- PANEL -->
     <div id="v-panel" class="view">
       <div class="topbar"><h2>Panel</h2><span id="sub-pill" class="pill pill-ok">Suscripción activa</span></div>
@@ -348,8 +396,8 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
             <option value="0">El mismo día de la revisión</option>
           </select>
         </div>
-        <div class="field"><label>Mensaje</label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, en Optiluxen notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
-        <div class="field"><label>Mensaje de renovación (1 año desde la compra)</label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
+        <div class="field"><label>Mensaje <small style="color:var(--ink-soft);font-weight:400;">· variables: {{nombre}}, {{optica}}</small></label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
+        <div class="field"><label>Mensaje de renovación (1 año desde la compra) <small style="color:var(--ink-soft);font-weight:400;">· variables: {{nombre}}, {{optica}}</small></label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: ya casi se cumple un año desde tu última compra. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
         <button class="btn-sm solid" onclick="saveReminders()">Guardar configuración</button>
         <span id="rem-saved" class="note" style="display:none;margin-left:8px;">Guardado ✓</span>
       </div>
@@ -610,8 +658,12 @@ let clientView = 'tabla';
 let authMode = 'login';
 let currentView = 'panel';
 
-const DEFAULT_MSG = 'Hola {{nombre}}, en Optiluxen notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
-const DEFAULT_RENEWAL = 'Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?';
+const DEFAULT_MSG = 'Hola {{nombre}}, te escribimos de {{optica}}: tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
+const DEFAULT_RENEWAL = 'Hola {{nombre}}, te escribimos de {{optica}}: ya casi se cumple un año desde tu última compra. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?';
+/* Textos antiguos: si alguien los tenía guardados tal cual, se migran a la nueva
+   versión para que el mensaje también lleve el nombre de la óptica. */
+const LEGACY_MSG = 'Hola {{nombre}}, en Optiluxen notamos que tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.';
+const LEGACY_RENEWAL = 'Hola {{nombre}}, ya casi se cumple un año desde tu última compra en la óptica. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?';
 
 /* ---------- utilidades ---------- */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -630,7 +682,22 @@ function waNumber(p){
 function waLink(phone,msg){ return `https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(msg)}`; }
 function mailLink(email,subject,body){ return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
 function smsLink(phone,msg){ return `sms:${phone}?body=${encodeURIComponent(msg)}`; }
-function fillTemplate(tpl,c){ return String(tpl||'').replace(/{{nombre}}/g, (c.nombre||'').split(' ')[0]); }
+function opticaName(){
+  return (state && state.shop && state.shop.name ? String(state.shop.name).trim() : '') || 'nuestra óptica';
+}
+/* {{nombre}}  → primer nombre del cliente
+   {{optica}}  → nombre de la óptica registrada en "Mi óptica"
+   Si el texto guardado no menciona la óptica, se le añade al final,
+   para que ningún recordatorio de WhatsApp salga sin el nombre. */
+function fillTemplate(tpl,c){
+  const first = ((c && c.nombre) || '').split(' ')[0];
+  let m = String(tpl||'')
+    .replace(/{{nombre}}/g, first)
+    .replace(/{{optica}}/g, opticaName());
+  const real = (state && state.shop && state.shop.name ? String(state.shop.name).trim() : '');
+  if(real && m.trim() && m.indexOf(real) === -1) m = m + ' — ' + real;
+  return m;
+}
 function daysUntil(dateStr){ if(!dateStr) return 9999; const d=new Date(dateStr+'T00:00:00'); const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
 function fmtDate(s){ if(!s) return '—'; const d=new Date(s+'T00:00:00'); if(isNaN(d)) return '—'; return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
 function addDays(dateStr,n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
@@ -728,13 +795,38 @@ async function doGoogle(){
   if(error) showAuthMsg(authErr(error));
 }
 
-async function doLogout(){ await sb.auth.signOut(); }
+async function doLogout(){ closeUMenu(); await sb.auth.signOut(); }
+
+/* menú de la barra superior: logo de la óptica → cerrar sesión */
+function toggleUMenu(e){
+  if(e) e.stopPropagation();
+  const w = document.getElementById('umenu');
+  if(!w) return;
+  const open = !w.classList.contains('open');
+  w.classList.toggle('open', open);
+  const b = document.getElementById('umenu-btn');
+  if(b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function closeUMenu(){
+  const w = document.getElementById('umenu');
+  if(!w) return;
+  w.classList.remove('open');
+  const b = document.getElementById('umenu-btn');
+  if(b) b.setAttribute('aria-expanded','false');
+}
+document.addEventListener('click', function(ev){
+  const w = document.getElementById('umenu');
+  if(!w || !w.classList.contains('open')) return;
+  if(!w.contains(ev.target)) closeUMenu();
+});
+document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape') closeUMenu(); });
 
 async function enterApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   initTheme();
   document.getElementById('foot-email').textContent = session.user.email || '—';
+  const ue = document.getElementById('um-email'); if(ue) ue.textContent = session.user.email || '—';
   await loadAll();
   renderAll();
   if(currentView!=='panel') setView(currentView);
@@ -789,8 +881,8 @@ async function loadAll(){
       state.reminders = {
         wa: set.wa!==false, email: set.email!==false, sms: !!set.sms,
         days: set.days==null?15:+set.days,
-        msg: set.msg||DEFAULT_MSG,
-        renewalMsg: set.renewal_msg||DEFAULT_RENEWAL
+        msg: (!set.msg || set.msg === LEGACY_MSG) ? DEFAULT_MSG : set.msg,
+        renewalMsg: (!set.renewal_msg || set.renewal_msg === LEGACY_RENEWAL) ? DEFAULT_RENEWAL : set.renewal_msg
       };
     } else {
       state.reminders = {wa:true,email:true,sms:false,days:15,msg:DEFAULT_MSG,renewalMsg:DEFAULT_RENEWAL};
@@ -861,12 +953,18 @@ function renderShop(){
   const inp = document.getElementById('shop-name-input');
   if(inp && document.activeElement !== inp) inp.value = state.shop.name || '';
 
+  const uName = document.getElementById('um-name');
+  if(uName) uName.textContent = name;
+  const uWho = document.getElementById('um-who');
+  if(uWho) uWho.textContent = name;
+
   const setPair = (imgId, phId, phText) => {
     const img = document.getElementById(imgId), ph = document.getElementById(phId);
     if(img){ img.style.display = has?'block':'none'; if(has) img.src = state.shop.logoUrl; }
     if(ph){ ph.style.display = has?'none':'flex'; ph.textContent = phText; }
   };
   setPair('shop-logo','shop-logo-ph', (name||'O').trim().charAt(0).toUpperCase() || 'O');
+  setPair('um-logo','um-logo-ph', (name||'O').trim().charAt(0).toUpperCase() || 'O');
   setPair('logo-img','logo-ph','O');
 
   const rm = document.getElementById('logo-remove');

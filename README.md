@@ -110,12 +110,17 @@ estático. No hay backend propio que desplegar.
 - **Alta de cliente con compra** — varios productos en la misma venta (varias gafas con
   especificaciones distintas) con **+ Agregar otro producto**, total en vivo y descuento
   aplicado al conjunto; al guardar se emite una sola factura con todos los ítems
-- **Recordatorios** — WhatsApp / correo / SMS con plantillas `{{nombre}}`,
-  ventana configurable (0/7/15/30 días) e historial de envíos guardado en BD
+- **Recordatorios** — WhatsApp / correo / SMS con plantillas `{{nombre}}` y `{{optica}}`;
+  si el texto guardado no menciona la óptica se le añade el nombre al final, así que
+  **ningún recordatorio sale sin el nombre de la óptica registrada**. Ventana configurable
+  (0/7/15/30 días) e historial de envíos guardado en BD
 - **Suscripción** — estado del plan; si está vencido bloquea Clientes y
   Recordatorios
 - **Respaldo** — descarga CSV y JSON completos (ya no dependen de
   `window.claude.use('downloads')`)
+- **Barra superior derecha** — logo de la aplicación y, al lado, el logo de la óptica
+  con desplegable (nombre, correo y **Cerrar sesión**). Como está en la cabecera,
+  el cierre de sesión también funciona en móvil, donde el lateral se oculta
 - Modo noche, diseño responsive
 
 ---
