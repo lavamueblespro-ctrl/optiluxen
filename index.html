@@ -88,20 +88,21 @@ input,select,textarea{font-family:inherit;font-size:14px;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
 .topbar h2{font-size:22px;}
 
-/* ---------- barra superior derecha: logo de la app + logo de la óptica (menú) ---------- */
-.main-head{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:0 0 14px;}
-.app-logo{display:flex;align-items:center;gap:9px;color:var(--ink);}
-.app-logo .brand-mark{width:30px;height:30px;border-radius:8px;font-size:16px;box-shadow:0 0 14px rgba(0,217,255,.4);}
-.app-logo .brand-name{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
-.umenu{position:relative;}
-.umenu-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px 5px 5px;color:var(--ink);max-width:60vw;}
-.umenu-btn:hover,.umenu-btn[aria-expanded="true"]{border-color:var(--teal);}
-.umenu-btn img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--teal-l);flex-shrink:0;}
-.umenu-btn .ph{width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg,var(--navy),var(--navy-2));color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:14px;flex-shrink:0;}
-.umenu-btn .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw;}
-.umenu-btn .caret{color:var(--ink-soft);flex-shrink:0;transition:transform .18s;}
+/* ---------- cabecera del menú lateral: logo de la app + logo de la óptica ---------- */
+.side-top{display:flex;flex-direction:column;gap:13px;margin-bottom:16px;}
+.side-top .brand{margin-bottom:0;}
+.nav-scroll{display:contents;}
+.umenu{position:relative;width:100%;}
+.umenu-btn{display:flex;align-items:center;gap:8px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:5px 11px 5px 5px;color:#eef1f6;}
+.umenu-btn:hover,.umenu-btn[aria-expanded="true"]{border-color:var(--teal);background:rgba(0,217,255,.1);}
+.umenu-btn img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.14);flex-shrink:0;}
+.umenu-btn .ph{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:14px;flex-shrink:0;}
+.umenu-btn .nm{flex:1;min-width:0;text-align:left;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.umenu-btn .caret{color:#c7cede;flex-shrink:0;transition:transform .18s;}
 .umenu.open .caret{transform:rotate(180deg);}
-.umenu-list{position:absolute;right:0;top:calc(100% + 9px);min-width:236px;max-width:80vw;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(10,14,20,.24);padding:8px;display:none;z-index:40;}
+/* escritorio: se abre hacia la derecha, sobre el área de contenido, para no
+   tapar el propio menú (Panel, Clientes…). En móvil, hacia abajo y a la derecha. */
+.umenu-list{position:absolute;left:calc(100% + 6px);top:0;min-width:236px;max-width:min(280px,calc(100vw - 24px));background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(10,14,20,.3);padding:8px;display:none;z-index:40;}
 .umenu.open .umenu-list{display:block;}
 .umenu-list .who{padding:6px 9px 10px;border-bottom:1px solid var(--line);margin-bottom:6px;}
 .umenu-list .who b{display:block;font-size:13.5px;word-break:break-word;}
@@ -109,9 +110,9 @@ input,select,textarea{font-family:inherit;font-size:14px;}
 .umenu-list .mi{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;border-radius:9px;padding:9px 10px;font-size:13.5px;font-weight:600;color:var(--danger);}
 .umenu-list .mi:hover{background:rgba(255,59,92,.1);}
 @media(max-width:760px){
-  .main-head{margin-bottom:16px;}
-  .app-logo .brand-name{display:none;}
-  .umenu-btn .nm{max-width:40vw;}
+  .side-top{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .umenu{width:auto;flex:1;min-width:0;max-width:64%;}
+  .umenu-list{left:auto;right:0;top:calc(100% + 9px);max-width:calc(100vw - 24px);}
 }
 
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;border-radius:99px;font-weight:600;}
@@ -248,9 +249,11 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 .linkbtn.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
 @media(max-width:760px){
   .shell{flex-direction:column;}
-  .sidebar{width:100%;flex-direction:row;overflow-x:auto;align-items:center;padding:12px;gap:4px;}
-  .sidebar .brand{display:none;} .side-foot{display:none;} .theme-toggle{display:none;}
-  .nav-item{white-space:nowrap;margin-bottom:0;}
+  .sidebar{width:100%;flex-direction:column;align-items:stretch;gap:0;
+           padding:12px;padding-top:calc(12px + env(safe-area-inset-top,0px));}
+  .side-foot{display:none;} .theme-toggle{display:none;}
+  .nav-scroll{display:flex;overflow-x:auto;gap:4px;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+  .nav-item{white-space:nowrap;margin-bottom:0;flex:0 0 auto;}
   .kanban{grid-template-columns:1fr;}
 }
 </style>
@@ -300,29 +303,10 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
 <div id="app">
 <div class="shell">
   <div class="sidebar">
-    <div class="brand"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
-    <div class="theme-toggle"><span>Modo noche</span><div class="switch" id="sw-theme" onclick="toggleTheme()"></div></div>
-    <div class="nav-item active" data-v="panel" onclick="setView('panel')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel</div>
-    <div class="nav-item" data-v="clientes" onclick="setView('clientes')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.5 20c.3-2.6 2-4.6 4.5-5"/></svg>Clientes</div>
-    <div class="nav-item" data-v="recordatorios" onclick="setView('recordatorios')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Recordatorios</div>
-    <div class="nav-item" data-v="negocio" onclick="setView('negocio')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v11H3z"/><path d="M9 20v-6h6v6"/></svg>Mi óptica</div>
-    <div class="nav-item" data-v="suscripcion" onclick="setView('suscripcion')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Suscripción</div>
-    <div class="side-foot">
-      <div class="shop-badge" id="shop-badge" title="Tu óptica">
-        <img id="shop-logo" style="display:none" alt="Logo">
-        <div class="ph" id="shop-logo-ph">O</div>
-        <span class="nm"><span id="shop-name">Mi óptica</span><small>plan Pro</small></span>
-      </div>
-      <b id="foot-email">—</b>
-      <button class="logout" onclick="doLogout()">Cerrar sesión</button>
-    </div>
-  </div>
+    <div class="side-top">
+      <div class="brand"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
 
-  <div class="main">
-
-    <!-- BARRA SUPERIOR DERECHA: logo de la app + logo de la óptica con menú de sesión -->
-    <div class="main-head">
-      <div class="app-logo" title="Optiluxen"><div class="brand-mark">O</div><div class="brand-name">Optiluxen</div></div>
+      <!-- CUENTA: logo de la óptica arriba del menú, con el desplegable de cerrar sesión -->
       <div class="umenu" id="umenu">
         <button class="umenu-btn" id="umenu-btn" type="button" aria-haspopup="menu" aria-expanded="false" onclick="toggleUMenu(event)" title="Mi cuenta">
           <img id="um-logo" style="display:none" alt="">
@@ -340,6 +324,26 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       </div>
     </div>
 
+    <div class="theme-toggle"><span>Modo noche</span><div class="switch" id="sw-theme" onclick="toggleTheme()"></div></div>
+    <div class="nav-scroll">
+    <div class="nav-item active" data-v="panel" onclick="setView('panel')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel</div>
+    <div class="nav-item" data-v="clientes" onclick="setView('clientes')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.5 20c.3-2.6 2-4.6 4.5-5"/></svg>Clientes</div>
+    <div class="nav-item" data-v="recordatorios" onclick="setView('recordatorios')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Recordatorios</div>
+    <div class="nav-item" data-v="negocio" onclick="setView('negocio')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v11H3z"/><path d="M9 20v-6h6v6"/></svg>Mi óptica</div>
+    <div class="nav-item" data-v="suscripcion" onclick="setView('suscripcion')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Suscripción</div>
+    </div>
+    <div class="side-foot">
+      <div class="shop-badge" id="shop-badge" title="Tu óptica">
+        <img id="shop-logo" style="display:none" alt="Logo">
+        <div class="ph" id="shop-logo-ph">O</div>
+        <span class="nm"><span id="shop-name">Mi óptica</span><small>plan Pro</small></span>
+      </div>
+      <b id="foot-email">—</b>
+      <button class="logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
     <!-- PANEL -->
     <div id="v-panel" class="view">
       <div class="topbar"><h2>Panel</h2><span id="sub-pill" class="pill pill-ok">Suscripción activa</span></div>
