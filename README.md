@@ -144,6 +144,7 @@ con comprobación antes/después de cada cambio.
 | CDN con versión flotante (`supabase-js@2`) | ✅ fijado a `2.117.2` |
 | Servidor local: path traversal y respuestas 500 | ✅ corregido (`400`/`403` sin filtrar errores) |
 | `script-src` sin `'self'`: solo `/config.js` (con dominio) y los 3 CDN | ✅ el script que Netlify inyecta queda bloqueado |
+| Escritura de `profiles` con UPDATE por columna (el UPSERT daba 403) | ✅ logo y nombre de la óptica se guardan |
 
 ### Qué se endureció (`security-hardening.sql`, ya aplicado)
 
@@ -179,14 +180,32 @@ con comprobación antes/después de cada cambio.
    `onclick=` siguen activos. Si algún día se añade un dominio propio hay que
    añadir su `/config.js` al `script-src` de `_headers`.
 
-### Comprobación integral (24/24)
+### Incidencia corregida: no se podía subir el logo
+
+El bloque 6 revocó el UPDATE de `profiles` **a nivel de tabla** y solo dejó
+concedidas las columnas `full_name` y `logo_path`. La app escribía con
+`.upsert()`, que PostgREST traduce a `INSERT … ON CONFLICT DO UPDATE` y que
+exige UPDATE sobre la tabla entera: respondía `403 permission denied for table
+profiles`. Resultado: **ni el logo ni el nombre de la óptica se guardaban**.
+Reproducido contra la API con un usuario real (`UPSERT` → 403, `UPDATE` → 200).
+
+Arreglado en la app, sin tocar los privilegios: `patchPerfil()` hace un
+`UPDATE` por columna —que sí está concedido— y solo si faltara la fila recurre
+al `INSERT` —que también está concedido—. El bloque 6 sigue tal cual.
+
+A la suite se le añadió la comprobación de que el UPSERT de `profiles`
+**sigue** devolviendo 403: si algún día se restaurara el UPDATE de tabla,
+saltaría el aviso… y con él el hueco de `plan_status`.
+
+### Comprobación integral (28/28)
 
 Con un usuario de prueba real (insert + login + JWT) se comprobó que sigue
 funcionando todo: lectura de las 7 tablas, altas de clientes, `UPSERT` de
-recordatorios, edición del nombre y del logo, emisión de facturas
-(`next_invoice_no`), storage privado, y que **anon recibe 401**, que **un
-usuario no ve los datos de otro**, que **el contador no se puede manipular
-(403)**, que **una contraseña de 6 caracteres ya no se acepta (422)** y que
+recordatorios, guardado del nombre de la óptica, **subida → firma → lectura →
+borrado del logo en el navegador**, emisión de facturas (`next_invoice_no`),
+storage privado, y que **anon recibe 401**, que **un usuario no ve los datos
+de otro**, que **el contador no se puede manipular (403)**, que **una
+contraseña de 12 caracteres es el mínimo (422)** y que
 **`plan_status`/`plan_next_charge` responden 403**.
 
 ### Pendiente / decisión

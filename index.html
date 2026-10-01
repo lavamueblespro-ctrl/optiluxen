@@ -287,7 +287,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
     <div class="auth-msg" id="auth-msg"></div>
     <div class="field" id="auth-name-row" style="display:none;"><label>Nombre de tu óptica</label><input id="li-name" type="text" placeholder="Óptica Alejo" autocomplete="organization" onkeydown="if(event.key==='Enter')doAuth()"></div>
     <div class="field"><label>Correo electrónico</label><input id="li-email" type="email" placeholder="tu@optica.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAuth()"></div>
-    <div class="field"><label>Contraseña</label><input id="li-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()"></div>
+    <div class="field"><label>Contraseña</label><input id="li-pass" type="password" placeholder="Mínimo 12 caracteres" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()"></div>
     <button class="btn btn-primary" id="auth-btn" onclick="doAuth()">Ingresar a mi panel</button>
     <div class="divider">o continúa con</div>
     <button class="btn btn-google" onclick="doGoogle()">
@@ -975,13 +975,30 @@ function renderShop(){
     : 'Sin logo. Formatos: PNG, JPG, WebP o SVG (máx. 4 MB).';
 }
 
+/* Escribe en la fila de la óptica (la crea handle_new_user() al registrarse).
+
+   OJO: aquí NO vale un `.upsert()`. PostgREST lo traduce a
+   INSERT … ON CONFLICT DO UPDATE, y eso exige UPDATE sobre la TABLA
+   entera; el endurecimiento solo concede las columnas `full_name` y
+   `logo_path`, así que el upsert respondía 403 "permission denied for
+   table profiles" y ni el logo ni el nombre se guardaban. Un UPDATE
+   por columna sí está concedido, y si la fila faltara (cuentas muy
+   antiguas) se recurre al INSERT, que sí está permitido. */
+async function patchPerfil(campos){
+  const {data: row, error} = await sb.from('profiles')
+    .update(campos).eq('id', session.user.id).select('id');
+  if(error) throw error;
+  if(row && row.length) return;
+  const {error: insErr} = await sb.from('profiles').insert({id: session.user.id, ...campos});
+  if(insErr) throw insErr;
+}
+
 async function saveShopName(){
   const v = document.getElementById('shop-name-input').value.trim();
   if(!v){ alert('El nombre no puede quedar vacío.'); return; }
   busy(true,'Guardando…');
   try{
-    const {error} = await sb.from('profiles').upsert({id: session.user.id, full_name: v}, {onConflict:'id'});
-    if(error) throw error;
+    await patchPerfil({full_name: v});
     state.shop.name = v;
     renderShop();
     const s = document.getElementById('shop-name-saved');
@@ -1025,9 +1042,7 @@ async function uploadLogo(input){
     const {error: upErr} = await sb.storage.from('branding')
       .upload(path, p.blob, {upsert:true, contentType:'image/png'});
     if(upErr) throw upErr;
-    const {error: dbErr} = await sb.from('profiles')
-      .upsert({id: session.user.id, logo_path: path}, {onConflict:'id'});
-    if(dbErr) throw dbErr;
+    await patchPerfil({logo_path: path});
     state.shop.logoPath = path;
     await signLogo();
     renderShop();
