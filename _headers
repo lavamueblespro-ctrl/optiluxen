@@ -27,7 +27,14 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=(), accelerometer=(), gyroscope=(), magnetometer=()
 
   # ── Content Security Policy ───────────────────────────────────
-  # * script-src  → solo este sitio + los 3 CDN que usa la app.
+  # * script-src  → NO incluye 'self': solo la ruta concreta de
+  #     ./config.js (hay que dar el dominio; Chrome ignora las rutas
+  #     relativas) y los 3 CDN que usa la app. Sin 'self', ningún otro
+  #     archivo del propio dominio puede ejecutarse; es lo que bloquea
+  #     el script "HUD/badge" que Netlify inyecta en los .html
+  #     publicados (/.netlify/scripts/hud), que de otro modo correría
+  #     con acceso total a esta página y a localStorage (donde vive la
+  #     sesión). Si se añade un dominio propio, añadir aquí su /config.js.
   #     Si mañana CDN o jsDelivr se comprometen, el navegador se niega
   #     a ejecutar el archivo: es la principal defensa contra
   #     "supply chain".  'unsafe-inline'/'unsafe-eval' se mantienen
@@ -38,4 +45,4 @@
   #     malicioso no podría volcar la base a otro servidor.
   # * object-src/base-uri/frame-ancestors → sin plugins, sin reescritura
   #     de rutas relativas y sin embeber el panel en otro sitio.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' https://brilliant-phoenix-268ff2.netlify.app/config.js https://*.netlify.app/config.js https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

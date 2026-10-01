@@ -143,6 +143,7 @@ con comprobación antes/después de cada cambio.
 | Apertura de enlaces externos (`target="_blank"`) | ✅ `rel="noopener noreferrer"` |
 | CDN con versión flotante (`supabase-js@2`) | ✅ fijado a `2.117.2` |
 | Servidor local: path traversal y respuestas 500 | ✅ corregido (`400`/`403` sin filtrar errores) |
+| `script-src` sin `'self'`: solo `/config.js` (con dominio) y los 3 CDN | ✅ el script que Netlify inyecta queda bloqueado |
 
 ### Qué se endureció (`security-hardening.sql`, ya aplicado)
 
@@ -167,6 +168,16 @@ con comprobación antes/después de cada cambio.
    retiraron los botones *Simular pago exitoso*, *Simular pago vencido* y
    *Pagar ahora*: el backend ya devolvía 403 y habrían mentido en pantalla.
    El estado del plan se cambia desde el Dashboard de Supabase.
+6. **La CSP ya no permite `script-src 'self'`.** Netlify inyecta en los `.html`
+   publicados un `<script async src="/.netlify/scripts/hud">` (el badge
+   *Powered by Netlify*) que se ejecuta **en el mismo origen que la app**, con
+   acceso a `localStorage`, donde vive la sesión. Ahora solo puede ejecutarse
+   `config.js` —indicando el dominio, porque Chrome ignora las rutas
+   relativas como `/config.js`— y los 3 CDN; ese script queda bloqueado y el
+   badge desaparece. Comprobado en el navegador: `config.js` carga, otro
+   archivo del propio dominio no, el CDN sí, el script `inline` sí y los
+   `onclick=` siguen activos. Si algún día se añade un dominio propio hay que
+   añadir su `/config.js` al `script-src` de `_headers`.
 
 ### Comprobación integral (24/24)
 
@@ -184,6 +195,9 @@ usuario no ve los datos de otro**, que **el contador no se puede manipular
   Lo que la hace inofensiva es que ya no abre nada.
 - `config.js` vive en el repositorio porque Netlify lo despliega desde ahí;
   su contenido es público, no un secreto.
+- Netlify añade además, en el borde y fuera del repositorio, un **comentario
+  publicitario** en la cabecera del HTML y el script del badge. El script ya
+  no se ejecuta (punto 6); el comentario no se puede quitar desde aquí.
 - Residual: la sesión se guarda en `localStorage`, así que cualquier XSS futuro
   podría robarla. Por eso se mantienen el escape estricto y la CSP.
 

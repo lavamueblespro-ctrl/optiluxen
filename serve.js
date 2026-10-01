@@ -35,7 +35,12 @@ const SEC_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'X-Permitted-Cross-Domain-Policies': 'none',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=(), accelerometer=(), gyroscope=(), magnetometer=()',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+  // Sin 'self' en script-src: solo la ruta concreta de ./config.js (hay
+  // que dar el dominio, Chrome ignora las rutas relativas) y los 3 CDN.
+  // Así ningún otro archivo del propio dominio puede ejecutarse,
+  // incluido el script "HUD/badge" que Netlify inyecta en los .html.
+  'Content-Security-Policy': "default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' "
+    + "http://localhost:*/config.js http://127.0.0.1:*/config.js "
     + "https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; "
     + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     + "font-src 'self' data: https://fonts.gstatic.com; "
