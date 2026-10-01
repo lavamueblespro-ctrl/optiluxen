@@ -45,6 +45,13 @@ revoke truncate, references, trigger
 -- registrarse. PostgreSQL se niega a invocar funciones disparadoras
 -- directamente, y el rol `anon`/`authenticated` jamás inserta en
 -- auth.users, así que se le quita el EXECUTE.
+--
+-- Verificado contra producción: aun así el EXECUTE concedido a `PUBLIC`
+-- sigue activo y NO es un hueco. `select public.handle_new_user();`
+-- responde SQLSTATE 0A000 "trigger functions can only be called as
+-- triggers", y PostgREST ni siquiera la publica (HTTP 404). No se revoca
+-- de `PUBLIC` a propósito: arriesgaría el disparador que crea el perfil
+-- durante el registro de usuarios.
 revoke execute on function public.handle_new_user() from anon, authenticated;
 
 /* ------------------------------------------------------------
@@ -86,24 +93,45 @@ begin
 end $$;
 
 /* ============================================================
-   6. DECISIÓN PENDIENTE — BLOQUEO DE PAGO  (dejado comentado a propósito)
+   6. BLOQUEO DE PAGO — `plan_status` ya no lo toca el usuario
 
-   La política "own profile" es `for all`, así que cualquiera que inicie
-   sesión puede hacerse la vida eterna con:
+   La política "own profile" es `for all`, así que cualquiera que
+   inicie sesión se podía marcar la suscripción como activa:
 
        update public.profiles set plan_status='active';
 
-   Se verificó: el rol autenticado SÍ tiene ese permiso. Es la misma
-   llamada que usa el botón "Simular pago exitoso" de la app.
+   Se verificó contra producción: el rol `authenticated` SÍ tenía
+   ese privilegio. Ahora se revoca el UPDATE de la tabla entera y se
+   devuelve únicamente por columna sobre las dos que la app necesita:
 
-   Si lo activas, el botón "Pagar ahora" dejará de funcionar (habría que
-   conectar una pasarela de pago real con webhook). Descomenta para
-   cerrar el agujero:
+       full_name  →  nombre de la óptica ("Mi óptica")
+       logo_path  →  logo de la óptica (bucket privado `branding`)
 
-revoke update (full_name, logo_path) on public.profiles from authenticated;
+   `plan_status` y `plan_next_charge` quedan reservados: se cambian
+   desde el Dashboard de Supabase o, cuando exista, desde el webhook
+   de una pasarela de pago real.
+
+   Consecuencia deliberada: los botones "Simular pago exitoso",
+   "Simular pago vencido" y "Pagar ahora" se retiraron de la app,
+   porque ya no podrían persistir el cambio y habrían mentido en la
+   pantalla. El INSERT del registro nuevo lo sigue haciendo
+   handle_new_user() (SECURITY DEFINER), que corre con los
+   privilegios del propietario de la función.
+   ============================================================ */
+revoke update on public.profiles from authenticated;
 grant  update (full_name, logo_path) on public.profiles to authenticated;
 
-   Nota: `logo_path` y `full_name` siguen editables; plan_status y
-   plan_next_charge quedan reservados. El INSERT del registro nuevo lo
-   sigue haciendo la función handle_new_user() (SECURITY DEFINER).
-   ============================================================ */
+/* ------------------------------------------------------------
+   6b. VERIFICACIÓN — el aviso debe decir "TODO OK"
+   ------------------------------------------------------------ */
+do $$
+declare bad text := '';
+begin
+  if not has_column_privilege('authenticated','public.profiles','full_name','UPDATE')        then bad := bad || 'full_name-bloqueado ';        end if;
+  if not has_column_privilege('authenticated','public.profiles','logo_path','UPDATE')        then bad := bad || 'logo_path-bloqueado ';        end if;
+  if     has_column_privilege('authenticated','public.profiles','plan_status','UPDATE')      then bad := bad || 'plan_status-editable ';       end if;
+  if     has_column_privilege('authenticated','public.profiles','plan_next_charge','UPDATE') then bad := bad || 'plan_next_charge-editable ';  end if;
+  if has_table_privilege('anon','public.profiles','UPDATE')                                 then bad := bad || 'anon-profiles-update ';       end if;
+
+  raise notice '%', case when bad='' then 'TODO OK: plan_status cerrado' else 'REVISAR: '||bad end;
+end $$;

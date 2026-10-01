@@ -146,8 +146,12 @@ con comprobación antes/después de cada cambio.
 
 ### Qué se endureció (`security-hardening.sql`, ya aplicado)
 
-1. **El rol `anon` perdió todo privilegio** sobre las 8 tablas y las funciones.
-   La anon key es pública por diseño, así que ya no sirve para nada.
+1. **El rol `anon` perdió todo privilegio** sobre las 8 tablas y sobre
+   `next_invoice_no()`. La anon key es pública por diseño, así que ya no
+   sirve para nada. `handle_new_user()` conserva el EXECUTE vía `PUBLIC`,
+   pero no es invocable: PostgreSQL responde *"trigger functions can only
+   be called as triggers"* y PostgREST ni la publica (404) — comprobado
+   contra producción.
 2. **TRUNCATE/REFERENCES/TRIGGER revocados** en `anon` y `authenticated`.
    Hallazgo verificado: con una política que negaba todo, un `TRUNCATE`
    ejecutado como `anon` **igual vació la tabla** (RLS no cubre TRUNCATE).
@@ -155,23 +159,27 @@ con comprobación antes/después de cada cambio.
    factura solo salen por `next_invoice_no()`.
 4. **Longitud de contraseña mínima: 6 → 12** (verificado con un registro real:
    GoTrue responde `weak_password`).
+5. **`profiles.plan_status` ya no lo puede tocar el usuario**: se revocó el
+   UPDATE de la tabla entera y solo quedan concedidos por columna
+   `full_name` (nombre de la óptica) y `logo_path` (su logo). Antes cualquier
+   cuenta podía marcarse a sí misma como pagada con
+   `update profiles set plan_status='active'`. Como efecto deliberado se
+   retiraron los botones *Simular pago exitoso*, *Simular pago vencido* y
+   *Pagar ahora*: el backend ya devolvía 403 y habrían mentido en pantalla.
+   El estado del plan se cambia desde el Dashboard de Supabase.
 
-### Comprobación integral (22/22)
+### Comprobación integral (24/24)
 
 Con un usuario de prueba real (insert + login + JWT) se comprobó que sigue
 funcionando todo: lectura de las 7 tablas, altas de clientes, `UPSERT` de
-recordatorios, edición del perfil, emisión de facturas (`next_invoice_no`),
-storage privado, y que **anon recibe 401**, que **un usuario no ve los datos
-de otro**, que **el contador no se puede manipular (403)** y que **una
-contraseña de 6 caracteres ya no se acepta (422)**.
+recordatorios, edición del nombre y del logo, emisión de facturas
+(`next_invoice_no`), storage privado, y que **anon recibe 401**, que **un
+usuario no ve los datos de otro**, que **el contador no se puede manipular
+(403)**, que **una contraseña de 6 caracteres ya no se acepta (422)** y que
+**`plan_status`/`plan_next_charge` responden 403**.
 
 ### Pendiente / decisión
 
-- **`profiles.plan_status` es editable por el propio usuario** (es el que usa el
-  botón *Simular pago*). Cualquiera podría marcarse la suscripción como activa.
-  No es una fuga de datos, sino un agujero de facturación: se cierra
-  descomentando el bloque 6 de `security-hardening.sql`, a cambio de que el botón
-  *Pagar ahora* deje de funcionar hasta conectar una pasarela real.
 - La clave `anon` **no se puede ocultar**: viaja al navegador por definición.
   Lo que la hace inofensiva es que ya no abre nada.
 - `config.js` vive en el repositorio porque Netlify lo despliega desde ahí;
@@ -183,6 +191,9 @@ contraseña de 6 caracteres ya no se acepta (422)**.
 
 ## Notas
 
+- **Para activar o vencer una suscripción** hay que cambiar `profiles.plan_status`
+  (`active` u `overdue`) desde el Dashboard de Supabase: la app no puede
+  tocarlo a propósito (bloque 6 de `security-hardening.sql`).
 - El botón **"Cargar datos de ejemplo"** (pestaña Suscripción) añade 3 clientes
   de prueba a tu base; no se inserta nada automáticamente.
 - Las fotos de fórmulas se sirven con URLs firmadas de 7 días, así que nunca

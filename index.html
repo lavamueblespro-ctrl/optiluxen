@@ -460,11 +460,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
           <div class="rli"><span>Próximo cobro</span><span id="sub-next">—</span></div>
           <div class="rli"><span>Valor mensual</span><span>$129.000 COP</span></div>
         </div>
-        <div class="actions" style="margin-top:14px;">
-          <button class="btn-sm solid" onclick="simulatePayment()">Simular pago exitoso</button>
-          <button class="btn-sm" style="border-color:var(--danger);color:var(--danger);" onclick="simulateOverdue()">Simular pago vencido</button>
-        </div>
-        <p class="note" style="margin-top:12px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro.</p>
+        <p class="note" style="margin-top:14px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro. Por seguridad, <b>el estado del plan no se puede cambiar desde la app</b>: lo activa el administrador desde el panel de Supabase. Eso impide que cualquier cuenta se marque a sí misma como pagada.</p>
       </div>
       <div class="card">
         <h3>Respaldo de tus datos</h3>
@@ -1060,9 +1056,6 @@ async function upsertReminders(){
     msg:r.msg, renewal_msg:r.renewalMsg, updated_at:new Date().toISOString()
   }, {onConflict:'user_id'});
 }
-async function upsertProfile(patch){
-  await sb.from('profiles').upsert(Object.assign({id: session.user.id}, patch), {onConflict:'id'});
-}
 async function nextInvoiceNo(){
   const {data, error} = await sb.rpc('next_invoice_no');
   if(error){ console.warn('next_invoice_no:', error); return null; }
@@ -1105,7 +1098,7 @@ function renderLock(){
   document.getElementById('sub-pill').textContent = locked? 'Suscripción vencida' : 'Suscripción activa';
   document.getElementById('sub-pill').className = 'pill ' + (locked? 'pill-danger':'pill-ok');
   const slot = document.getElementById('lockbar-slot');
-  slot.innerHTML = locked ? `<div class="lockbar"><span>Tu pago mensual está vencido. El acceso a Clientes y Recordatorios está bloqueado hasta regularizar el cobro.</span><button onclick="simulatePayment()">Pagar ahora</button></div>` : '';
+  slot.innerHTML = locked ? `<div class="lockbar"><span>Tu pago mensual está vencido. El acceso a Clientes y Recordatorios está bloqueado hasta regularizar el cobro. El plan lo reactiva el administrador de la cuenta.</span></div>` : '';
   document.querySelectorAll('.nav-item[data-v="clientes"], .nav-item[data-v="recordatorios"]').forEach(n=>{
     n.style.opacity = locked? .45 : 1;
     n.style.pointerEvents = locked? 'none':'auto';
@@ -1987,19 +1980,11 @@ function renderSub(){
   document.getElementById('sub-status-txt').textContent = state.sub.status==='active'?'Activa':'Vencida';
   document.getElementById('sub-next').textContent = fmtDate(state.sub.next);
 }
-async function simulatePayment(){
-  const n=new Date(); n.setDate(n.getDate()+30);
-  state.sub.status='active'; state.sub.next=n.toISOString().slice(0,10);
-  try{ await upsertProfile({plan_status:'active', plan_next_charge: state.sub.next}); }
-  catch(e){ console.warn(e); }
-  renderAll();
-}
-async function simulateOverdue(){
-  state.sub.status='overdue';
-  try{ await upsertProfile({plan_status:'overdue'}); }
-  catch(e){ console.warn(e); }
-  renderAll();
-}
+/* El estado de la suscripción (plan_status / plan_next_charge) ya no se puede
+   tocar desde el navegador: el privilegio de UPDATE sobre esas columnas está
+   revocado en security-hardening.sql (bloque 6). Antes había aquí "Simular
+   pago exitoso" y "Simular pago vencido"; se retiraron porque el backend ya
+   devolvía 403 y la pantalla habría mentido hasta recargar. */
 
 /* ---------- arranque ---------- */
 (async function boot(){
