@@ -142,6 +142,9 @@ input,select,textarea{font-family:inherit;font-size:14px;}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;}
 .btn-sm{padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);}
+.btn-pago{width:100%;padding:13px 16px;border-radius:10px;border:none;background:var(--teal);color:#0a0716;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:filter .15s,opacity .15s;}
+.btn-pago:hover{filter:brightness(1.08);}
+.btn-pago:disabled{opacity:.65;cursor:default;}
 .btn-sm.solid{background:var(--teal);color:#0a0716;border-color:var(--teal);}
 .btn-sm.amber{background:var(--amber);color:#fff;border-color:var(--amber);}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
@@ -464,7 +467,11 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
           <div class="rli"><span>Próximo cobro</span><span id="sub-next">—</span></div>
           <div class="rli"><span>Valor mensual</span><span>$129.000 COP</span></div>
         </div>
-        <p class="note" style="margin-top:14px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro. Por seguridad, <b>el estado del plan no se puede cambiar desde la app</b>: lo activa el administrador desde el panel de Supabase. Eso impide que cualquier cuenta se marque a sí misma como pagada.</p>
+        <div id="sub-pago" style="margin-top:16px;">
+          <button class="btn-pago" id="btn-pagar" onclick="iniciarPago()">Pagar con Mercado Pago</button>
+          <p class="note" id="sub-pago-msg" style="margin-top:9px;display:none;"></p>
+        </div>
+        <p class="note" style="margin-top:14px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro. Por seguridad, <b>el estado del plan no se puede cambiar desde la app</b>: lo decide Mercado Pago y lo escribe el servidor al confirmar el cobro. Así ninguna cuenta puede marcarse a sí misma como pagada.</p>
       </div>
       <div class="card">
         <h3>Respaldo de tus datos</h3>
@@ -830,6 +837,7 @@ async function enterApp(){
   await loadAll();
   renderAll();
   if(currentView!=='panel') setView(currentView);
+  manejarVueltaPago();   // vuelve del checkout de Mercado Pago → confirma el pago
 }
 
 /* ---------- carga desde Supabase ---------- */
@@ -2001,9 +2009,86 @@ function renderSub(){
 }
 /* El estado de la suscripción (plan_status / plan_next_charge) ya no se puede
    tocar desde el navegador: el privilegio de UPDATE sobre esas columnas está
-   revocado en security-hardening.sql (bloque 6). Antes había aquí "Simular
-   pago exitoso" y "Simular pago vencido"; se retiraron porque el backend ya
-   devolvía 403 y la pantalla habría mentido hasta recargar. */
+   revocado en pago-schema.sql, igual que el INSERT sobre ellas y el DELETE de
+   la fila. Antes había aquí "Simular pago exitoso" y "Simular pago vencido";
+   se retiraron porque el backend ya devolvía 403. Quien decide el plan es
+   Mercado Pago (webhook firmado) y quien lo escribe es el servidor. */
+
+function subURL(fn){ return (CFG.SUPABASE_URL||'').replace(/\/+$/,'')+'/functions/v1/'+fn; }
+function subHeaders(){
+  return {'Content-Type':'application/json', apikey:CFG.SUPABASE_ANON_KEY, Authorization:'Bearer '+(session&&session.access_token)};
+}
+/* Habla con la Edge Function mp-billing. Devuelve la respuesta o lanza con el
+   mensaje del servidor (que es el que tiene la llave de Mercado Pago). */
+async function mpLlamar(cuerpo){
+  const r = await fetch(subURL('mp-billing'), {method:'POST', headers:subHeaders(), body:JSON.stringify(cuerpo)});
+  let d = {}; try{ d = await r.json(); }catch(e){}
+  if(!r.ok) throw new Error(d.error || ('No se pudo contactar con los pagos (HTTP '+r.status+')'));
+  return d;
+}
+
+/* Botón «Pagar con Mercado Pago». Aquí solo se pide la URL de pago: la
+   suscripción la crea el servidor y la llave privada no sale de allí. */
+async function iniciarPago(){
+  if(!sb || !session) return;
+  const btn = document.getElementById('btn-pagar');
+  const msg = document.getElementById('sub-pago-msg');
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparando el pago…'; }
+  if(msg){ msg.style.display = 'none'; }
+  try{
+    const d = await mpLlamar({action:'checkout'});
+    if(d.url){ location.href = d.url; return; }        // ← se va al checkout de MP
+    if(d.estado==='activo'){ toast('Tu suscripción ya está activa.'); await sincronizarPago(2); return; }
+    throw new Error('Mercado Pago no devolvió un enlace de pago.');
+  }catch(e){
+    const m = authErr(e);
+    toast(m, 7000);
+    if(msg){ msg.textContent = m; msg.style.display = 'block'; }
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Pagar con Mercado Pago'; }
+  }
+}
+
+/* Mercado Pago redirige de vuelta con ?pago=ok. El estado real lo consulta el
+   servidor contra MP; el navegador no aporta nada (ni el id ni el estado). */
+async function sincronizarPago(intentos){
+  let ultimo = null;
+  for(let i=0;i<intentos;i++){
+    try{
+      const d = await mpLlamar({action:'sync'});
+      ultimo = d;
+      const terminal = d.estado_mp && (d.estado_mp==='authorized' || ['cancelled','rejected','expired','paused'].includes(d.estado_mp));
+      if(d.ok && terminal){
+        aplicarPlan(d);
+        if(d.estado_mp==='authorized') toast('✅ Pago confirmado. Tu suscripción sigue activa.', 5000);
+        else toast('Mercado Pago no aprobó el pago ('+d.estado_mp+'). Tu plan queda vencido.', 8000);
+        return d;
+      }
+      if(d.ok && d.plan_status) aplicarPlan(d);
+    }catch(e){ console.warn('sync:', authErr(e)); }
+    await new Promise(r=>setTimeout(r, 4000));
+  }
+  toast('Todavía no se confirma el pago. Recarga la página en unos segundos y quedará reflejado.', 7000);
+  return null;
+}
+function aplicarPlan(d){
+  if(!d) return;
+  if(d.plan_status) state.sub.status = d.plan_status;
+  if(d.plan_next_charge) state.sub.next = d.plan_next_charge;
+  renderAll();
+}
+async function manejarVueltaPago(){
+  try{
+    const u = new URL(location.href);
+    if(u.searchParams.get('pago')!=='ok') return;
+    u.searchParams.delete('pago');
+    history.replaceState(null,'',u.pathname+u.search+u.hash);
+    if(!session) return;
+    setView('suscripcion');
+    toast('Confirmando tu pago con Mercado Pago…', 0);
+    await sincronizarPago(8);
+  }catch(e){ console.warn('vuelta de pago:', e); }
+}
 
 /* ---------- arranque ---------- */
 (async function boot(){
