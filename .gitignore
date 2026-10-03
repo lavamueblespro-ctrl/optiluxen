@@ -29,3 +29,6 @@ service-role-key.*
 secret-key.*
 *.pem
 *.key
+
+# Temporales de la CLI de Supabase
+supabase/.temp/
