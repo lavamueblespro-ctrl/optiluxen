@@ -298,7 +298,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       Continuar con Google
     </button>
     <p class="auth-switch" id="auth-switch">¿Aún no tienes cuenta? <a onclick="setAuthMode('signup')">Créala aquí</a></p>
-    <p class="login-note">Los datos se guardan en tu proyecto de Supabase, con acceso privado por usuario.</p>
+    <p class="login-note">Cada óptica ve únicamente sus propios datos.</p>
   </div>
 </div>
 
@@ -355,7 +355,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
         <div class="stat"><div class="num" id="st-clientes">0</div><div class="lbl">Clientes registrados</div></div>
         <div class="stat"><div class="num" id="st-proximas">0</div><div class="lbl">Revisiones próximas (30 días)</div></div>
         <div class="stat"><div class="num" id="st-ventas">$0</div><div class="lbl">Vendido este mes</div></div>
-        <div class="stat"><div class="num" id="st-recordatorios">0</div><div class="lbl">Recordatorios activos</div></div>
+        <div class="stat"><div class="num" id="st-recordatorios">0</div><div class="lbl">Recordatorios pendientes</div></div>
       </div>
       <div class="card">
         <h3>Próximas revisiones</h3>
@@ -388,12 +388,6 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
     <div id="v-recordatorios" class="view" style="display:none">
       <div class="topbar"><h2>Recordatorios automáticos</h2></div>
       <div class="card">
-        <h3>Canales de envío</h3>
-        <div class="toggle-row"><div><b>WhatsApp</b><div class="note">Mensaje directo al número guardado del cliente.</div></div><div class="switch on" id="sw-wa" onclick="toggleSw('wa')"></div></div>
-        <div class="toggle-row"><div><b>Correo electrónico</b><div class="note">Envío automático al correo del cliente.</div></div><div class="switch on" id="sw-email" onclick="toggleSw('email')"></div></div>
-        <div class="toggle-row" style="border-bottom:none;"><div><b>SMS</b><div class="note">Mensaje de texto corto al celular.</div></div><div class="switch" id="sw-sms" onclick="toggleSw('sms')"></div></div>
-      </div>
-      <div class="card">
         <h3>Programación</h3>
         <div class="field"><label>Enviar recordatorio</label>
           <select id="rem-days" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">
@@ -403,8 +397,8 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
             <option value="0">El mismo día de la revisión</option>
           </select>
         </div>
-        <div class="field"><label>Mensaje <small style="color:var(--ink-soft);font-weight:400;">· variables: {{nombre}}, {{optica}}</small></label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
-        <div class="field"><label>Mensaje de renovación (1 año desde la compra) <small style="color:var(--ink-soft);font-weight:400;">· variables: {{nombre}}, {{optica}}</small></label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: ya casi se cumple un año desde tu última compra. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
+        <div class="field"><label>Mensaje de revisión <small style="color:var(--ink-soft);font-weight:400;">· se personaliza con el nombre del cliente y el de tu óptica</small></label><textarea id="rem-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: tu revisión anual se acerca. Agenda tu cita respondiendo este mensaje.</textarea></div>
+        <div class="field"><label>Mensaje de renovación (1 año desde la compra) <small style="color:var(--ink-soft);font-weight:400;">· se personaliza con el nombre del cliente y el de tu óptica</small></label><textarea id="rem-renewal-msg" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);">Hola {{nombre}}, te escribimos de {{optica}}: ya casi se cumple un año desde tu última compra. Te recomendamos renovar tu fórmula y tus gafas — ¿agendamos tu revisión?</textarea></div>
         <button class="btn-sm solid" onclick="saveReminders()">Guardar configuración</button>
         <span id="rem-saved" class="note" style="display:none;margin-left:8px;">Guardado ✓</span>
       </div>
@@ -433,7 +427,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       </div>
       <div class="card">
         <h3>Logo del negocio</h3>
-        <p class="note">Se muestra en la app y se imprime en el PDF de cada factura. Se procesa en tu navegador (se redimensiona a 640 px) y se guarda en el bucket privado <code>branding</code>.</p>
+        <p class="note">Aparece en la app y en el encabezado de cada factura que entregues a tus clientes.</p>
         <div class="logo-drop" style="margin-top:12px;">
           <div class="logo-preview" id="logo-preview">
             <span class="ph" id="logo-ph">O</span>
@@ -453,7 +447,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
       </div>
       <div class="card">
         <h3>Cómo se ve en la factura</h3>
-        <p class="note">Abre cualquier factura desde Clientes → ficha del cliente → Facturación. El PDF se genera <b>íntegramente en tu navegador</b> con jsPDF: no consume cuota ni recursos de Supabase, y queda listo para ver, descargar o compartir por WhatsApp.</p>
+        <p class="note">Abre cualquier factura desde Clientes → ficha del cliente → Facturación. Sale al instante con el logo y los datos de tu óptica, lista para ver, descargar o compartir por WhatsApp.</p>
       </div>
     </div>
 
@@ -471,11 +465,11 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
           <button class="btn-pago" id="btn-pagar" onclick="iniciarPago()">Pagar con Mercado Pago</button>
           <p class="note" id="sub-pago-msg" style="margin-top:9px;display:none;"></p>
         </div>
-        <p class="note" style="margin-top:14px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro. Por seguridad, <b>el estado del plan no se puede cambiar desde la app</b>: lo decide Mercado Pago y lo escribe el servidor al confirmar el cobro. Así ninguna cuenta puede marcarse a sí misma como pagada.</p>
+        <p class="note" style="margin-top:14px;">Cuando el pago está vencido, el acceso a Clientes y Recordatorios se bloquea automáticamente hasta que se regularice el cobro. Por seguridad, <b>el estado del plan no se puede cambiar desde la app</b>: lo fija Mercado Pago al confirmar el cobro, así que ninguna cuenta puede marcarse a sí misma como pagada.</p>
       </div>
       <div class="card">
         <h3>Respaldo de tus datos</h3>
-        <p class="note">Todo vive en tu proyecto de Supabase (tabla <code>clients</code>, <code>prescriptions</code>, <code>sales</code>…), aislado por usuario con Row Level Security. Descarga una copia cuando quieras:</p>
+        <p class="note">Tu información es tuya: solo tú puedes verla. Descarga una copia cuando quieras:</p>
         <div class="actions" style="margin-top:10px;">
           <button class="btn-sm" onclick="exportCSV()">Exportar clientes (CSV)</button>
           <button class="btn-sm" onclick="exportJSON()">Copia completa (JSON)</button>
@@ -545,7 +539,7 @@ tr.clk:hover{background:var(--teal-l);cursor:pointer;}
     <div id="imp-pane-file">
       <p class="note">Sube un archivo <b>.xlsx</b>, <b>.xls</b> o <b>.csv</b> con las columnas
         <b>Nombre</b>, <b>Teléfono</b>, <b>Correo</b> (y opcional <b>Próxima revisión</b>).
-        Se lee <b>en tu navegador</b>: no se sube a ningún servidor.</p>
+        Los clientes quedan agregados de una sola vez.</p>
       <label class="drop" for="import-file" tabindex="0">
         <span class="ico">📄</span>
         <b>Toca aquí para elegir el archivo</b>
@@ -1125,7 +1119,7 @@ function renderLock(){
   document.getElementById('sub-pill').textContent = locked? 'Suscripción vencida' : 'Suscripción activa';
   document.getElementById('sub-pill').className = 'pill ' + (locked? 'pill-danger':'pill-ok');
   const slot = document.getElementById('lockbar-slot');
-  slot.innerHTML = locked ? `<div class="lockbar"><span>Tu pago mensual está vencido. El acceso a Clientes y Recordatorios está bloqueado hasta regularizar el cobro. El plan lo reactiva el administrador de la cuenta.</span></div>` : '';
+  slot.innerHTML = locked ? `<div class="lockbar"><span>Tu pago mensual está vencido. El acceso a Clientes y Recordatorios está bloqueado hasta regularizar el cobro. El plan se reactiva en cuanto se confirme el pago.</span></div>` : '';
   document.querySelectorAll('.nav-item[data-v="clientes"], .nav-item[data-v="recordatorios"]').forEach(n=>{
     n.style.opacity = locked? .45 : 1;
     n.style.pointerEvents = locked? 'none':'auto';
@@ -1144,8 +1138,8 @@ function renderPanel(){
   let ventas=0; const thisMonth=today().slice(0,7);
   state.clients.forEach(c=>c.sales.forEach(s=>{ if((s.date||'').slice(0,7)===thisMonth) ventas+=+s.total; }));
   document.getElementById('st-ventas').textContent = money(ventas);
-  const activeChans = ['wa','email','sms'].filter(k=>state.reminders[k]).length;
-  document.getElementById('st-recordatorios').textContent = activeChans;
+  const pendientes = state.clients.filter(c=>c.fecha && daysUntil(c.fecha)<=state.reminders.days && daysUntil(c.fecha)>=0).length;
+  document.getElementById('st-recordatorios').textContent = pendientes;
 
   const list = document.getElementById('panel-upcoming');
   list.innerHTML = soon.sort((a,b)=>daysUntil(a.fecha)-daysUntil(b.fecha)).map(c=>
@@ -1886,7 +1880,7 @@ async function makeInvoice(clientId, idx){
 }
 
 async function buildInvoice(clientId, idx){
-  busy(true, 'Generando factura en tu navegador…');
+  busy(true, 'Generando factura…');
   let p = null;
   try{ p = await makeInvoice(clientId, idx); }
   catch(e){ alert('No se pudo generar la factura: '+authErr(e)); }
@@ -1913,7 +1907,7 @@ async function shareInvoice(clientId, idx){
     }
   }catch(e){ if(e && e.name==='AbortError') return; }
   downloadBlob(invoiceNo(p.s)+'.pdf', p.blob);
-  toast('Este navegador no tiene menú de compartir. Guardamos la factura para que la compartas.');
+  toast('No se pudo abrir el menú de compartir. Guardamos la factura para que la compartas.');
 }
 
 /* 2) COMPARTIR POR WHATSAPP — abre el chat directo del cliente con su número */
@@ -1958,9 +1952,7 @@ async function downloadInvoice(clientId, idx){
 }
 
 /* ---------- recordatorios ---------- */
-function toggleSw(k){ state.reminders[k]=!state.reminders[k]; document.getElementById('sw-'+k).classList.toggle('on'); renderPanel(); }
 function renderReminders(){
-  ['wa','email','sms'].forEach(k=> document.getElementById('sw-'+k).classList.toggle('on', !!state.reminders[k]));
   document.getElementById('rem-days').value = state.reminders.days;
   document.getElementById('rem-msg').value = state.reminders.msg || DEFAULT_MSG;
   document.getElementById('rem-renewal-msg').value = state.reminders.renewalMsg || DEFAULT_RENEWAL;
@@ -1969,10 +1961,10 @@ function renderReminders(){
   document.getElementById('rem-due').innerHTML = due.map(c=>{
     const msg = fillTemplate(state.reminders.msg || DEFAULT_MSG, c);
     let links='';
-    if(state.reminders.wa && c.tel) links+=`<a class="linkbtn wa" target="_blank" rel="noopener noreferrer" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
-    if(state.reminders.email && c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — Optiluxen',msg))}" onclick="logSend(this)">Correo</a>`;
-    if(state.reminders.sms && c.tel) links+=`<a class="linkbtn sms" data-canal="SMS" data-nombre="${attr(c.nombre)}" href="${attr(smsLink(c.tel,msg))}" onclick="logSend(this)">SMS</a>`;
-    return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Revisión: ${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span><div class="linkrow">${links||'<span class="note">Falta teléfono o correo, o el canal está desactivado.</span>'}</div></div>`;
+    if(c.tel) links+=`<a class="linkbtn wa" target="_blank" rel="noopener noreferrer" data-canal="WhatsApp" data-nombre="${attr(c.nombre)}" href="${attr(waLink(c.tel,msg))}" onclick="logSend(this)">WhatsApp</a>`;
+    if(c.correo) links+=`<a class="linkbtn mail" data-canal="Correo" data-nombre="${attr(c.nombre)}" href="${attr(mailLink(c.correo,'Recordatorio de revisión — Optiluxen',msg))}" onclick="logSend(this)">Correo</a>`;
+    if(c.tel) links+=`<a class="linkbtn sms" data-canal="SMS" data-nombre="${attr(c.nombre)}" href="${attr(smsLink(c.tel,msg))}" onclick="logSend(this)">SMS</a>`;
+    return `<div class="due-card"><b>${esc(c.nombre)}</b><span>Revisión: ${fmtDate(c.fecha)} · en ${daysUntil(c.fecha)} días</span><div class="linkrow">${links||'<span class="note">Falta el teléfono o el correo del cliente.</span>'}</div></div>`;
   }).join('') || '<div class="note">Ningún cliente está dentro de la ventana de recordatorio en este momento.</div>';
 
   document.getElementById('rem-log').innerHTML = state.remLog.slice().reverse().map(l=>
